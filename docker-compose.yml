@@ -1,0 +1,54 @@
+# Services for the explainable card-fraud alert queue.
+# Start everything with:  docker compose up -d
+# All settings (passwords, ports) come from .env — copy .env.example to .env first.
+
+services:
+
+  # System of record: raw transactions, feature views, alerts and analyst decisions.
+  postgres:
+    image: postgres:16
+    container_name: fraud_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # 127.0.0.1 = reachable from this laptop only, not from the wider network.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Named volume, so the data survives "docker compose down".
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # Other services wait until PostgreSQL actually accepts connections.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Experiment tracking and model registry: every training run is logged here.
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.17.2
+    container_name: fraud_mlflow
+    restart: unless-stopped
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --serve-artifacts
+      --artifacts-destination /mlflow/artifacts
+    ports:
+      # Host port 5001, because macOS uses 5000 for AirPlay Receiver.
+      - "127.0.0.1:${MLFLOW_PORT:-5001}:5000"
+    volumes:
+      - mlflow_data:/mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  mlflow_data:
