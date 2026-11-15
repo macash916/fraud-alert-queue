@@ -1,0 +1,21 @@
+# dbt owns the SQL layer that sits on top of the raw table:
+#   raw_transactions (loaded by src/load_data.py)
+#     -> staging/stg_transactions       tokenised, personal data removed   (table)
+#     -> marts/fct_transaction_features one row of model features per txn  (table)
+name: fraud_alert_queue
+version: "1.0.0"
+config-version: 2
+profile: fraud_alert_queue
+
+model-paths: ["models"]
+test-paths: ["tests"]
+clean-targets: ["target", "logs"]
+
+models:
+  fraud_alert_queue:
+    staging:
+      # A table, not a view: a view would store the hashing key in its definition.
+      +materialized: table
+    marts:
+      # A table, so window functions run once per build, not on every query and test.
+      +materialized: table

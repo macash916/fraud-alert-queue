@@ -3,6 +3,9 @@
 --   staging_transactions : matches the Kaggle CSV exactly, so COPY can load it as-is.
 --   raw_transactions     : the typed system of record that everything else reads from.
 
+-- pgcrypto provides hmac(), used by dbt to turn card numbers into keyed tokens (PCI DSS).
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 DROP TABLE IF EXISTS staging_transactions;
 CREATE TABLE staging_transactions (
     row_index              BIGINT,   -- unnamed pandas index column in the CSV; not kept

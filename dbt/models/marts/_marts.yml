@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: fct_transaction_features
+    description: >
+      Model features, one row per transaction, using only information available before
+      that transaction. Read by training, scoring and the alert queue.
+    columns:
+      - name: trans_num
+        data_tests: [unique, not_null]
+      - name: card_token
+        data_tests: [not_null]
+      - name: txn_count_1h
+        description: Card's transactions in the hour before this one.
+        data_tests: [not_null]
+      - name: txn_count_24h
+        description: Card's transactions in the 24 hours before this one.
+        data_tests: [not_null]
+      - name: amt_sum_24h
+        description: Card's spend in the 24 hours before this one.
+        data_tests: [not_null]
+      - name: prior_txn_count
+        description: Number of earlier transactions on this card. Tells the model how much history the ratios rest on.
+        data_tests: [not_null]
+      - name: amt_vs_avg
+        description: This amount divided by the card's average over all earlier transactions. Null on a card's first transaction.
+      - name: distance_km
+        data_tests: [not_null]
+      - name: is_new_merchant
+        description: 1 if this card has not been used at this merchant before.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+      - name: secs_since_last
+        description: Seconds since this card's previous transaction. Null on a card's first.
+      - name: is_fraud
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false

@@ -2,3 +2,5 @@
 pandas==2.2.3
 psycopg[binary]==3.2.3
 python-dotenv==1.0.1
+dbt-core==1.12.7
+dbt-postgres==1.11.0

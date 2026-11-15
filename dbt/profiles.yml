@@ -1,0 +1,14 @@
+# Connection settings. No secrets here: every value is read from environment variables,
+# which come from .env (see README for the run command).
+fraud_alert_queue:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | as_number }}"
+      user: "{{ env_var('POSTGRES_USER') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD') }}"
+      dbname: "{{ env_var('POSTGRES_DB') }}"
+      schema: analytics   # dbt models live here, separate from the raw table in public
+      threads: 4

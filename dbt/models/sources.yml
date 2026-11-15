@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Raw layer loaded from the Kaggle CSVs by src/load_data.py. Contains card numbers and personal data; nothing downstream reads it except stg_transactions.
+    schema: public
+    tables:
+      - name: raw_transactions
+        description: One row per card transaction, typed but otherwise as supplied.
+        columns:
+          - name: trans_num
+            data_tests: [unique, not_null]
+          - name: cc_num
+            description: Card number in clear text (PCI data). Tokenised in staging.
+            data_tests: [not_null]

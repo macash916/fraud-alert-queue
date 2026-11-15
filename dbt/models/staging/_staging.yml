@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    description: >
+      One row per transaction with the card number replaced by a keyed token and personal
+      data removed. Every downstream model reads from here, never from the raw table.
+    config:
+      post_hook: "create index if not exists idx_stg_card_time on {{ this }} (card_token, trans_ts)"
+    columns:
+      - name: trans_num
+        description: Unique transaction ID.
+        data_tests: [unique, not_null]
+      - name: trans_ts
+        data_tests: [not_null]
+      - name: card_token
+        description: HMAC-SHA256 of the card number. Stable per card, not reversible without the key.
+        data_tests: [not_null]
+      - name: amt
+        data_tests: [not_null]
+      - name: distance_km
+        description: Haversine distance from the customer's home to the merchant.
+        data_tests: [not_null]
+      - name: is_fraud
+        description: Label. Used as the training target only, never as a feature.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+      - name: source_file
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["fraudTrain.csv", "fraudTest.csv"]
