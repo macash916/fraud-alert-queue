@@ -2,6 +2,8 @@
 
 On 16 Nov 2026 (00:45) Amrit chose **option A**: Claude continues overnight using the recommended option wherever a design question comes up, records every such choice here, and commits each finished section locally (no push). Amrit approves or reverses each item in the morning; anything reversed gets reworked.
 
+**Status (16 Nov 2026, morning): O1 to O28 approved by Amrit.**
+
 Each entry gives the question, the option chosen, the alternatives, and why.
 
 | # | Section | Question | Chosen (recommended) | Alternatives | Why |
@@ -34,3 +36,59 @@ Each entry gives the question, the option chosen, the alternatives, and why.
 | O26 | 11 App | Queue layout | Full-width queue ranked by expected loss on top, case panel below (reasons, decision buttons, SHAP breakdown, other alerts on the card). Selection resets to the top alert after each decision | Side-by-side list and detail | Side by side clipped the table at laptop width; the reset stops an analyst acting on a different alert from the one they read |
 | O27 | 11 App | Analyst identity | A name field in the sidebar, required before deciding. No login | Authentication | Login is out of scope for a portfolio build; the model card will list it as a production gap |
 | O28 | 11 App | Docker | Separate slim image with only the app's 4 packages; `.dockerignore` admits only `app/*.py`, its requirements and the Streamlit config; runs as a non-root user; port bound to 127.0.0.1 | One image with the full modelling stack | Smaller image; data and `.env` can never be copied into it |
+
+## Remaining build, S12 to S17 (approved by Amrit, 16 Nov 2026)
+
+Proposed by Claude, approved by Amrit as one blanket go-ahead with the changes noted. These move into `decision_log.md` in S14.
+
+| # | Section | Decision | Status |
+|---|---|---|---|
+| D1 | S12 Monitoring | Monthly checks: input drift (PSI on 14 features and the category mix), score drift, outcomes, the fairness watch item | Approved |
+| D2 | S12 Monitoring | Reference: training months; calendar-month windows, part-June labelled | Approved |
+| D3 | S12 Monitoring | RAG: PSI below 0.10 / 0.10-0.25 / above 0.25; fraud value amber at 2 and red at 5 points below baseline; fairness amber at 1.10x, red on the audit's 1.25x rule | Approved |
+| D4 | S12 Monitoring | A test injects synthetic drift and must turn red | Approved |
+| D5 | S12 Monitoring | Outputs: `monitoring.drift_monthly`, heatmap, MLflow `monitoring`, `docs/monitoring.md`; no app page | Approved |
+| D6 | S12 Monitoring | Retraining policy documented, not automated | Approved |
+| D7 | S12 Monitoring | Label delay documented, not simulated | Approved |
+| D8 | S13 Tests | Unit tests (no database) for wording, intervals, cost and routing logic, confirm then block, fairness flags, MI sums, PSI | Approved |
+| D9 | S13 Tests | Hand-made synthetic fixture with hand-calculated expected SQL feature values | Approved |
+| D10 | S13 CI | GitHub Actions: lint, unit tests, dbt build and fixture tests on PostgreSQL 16, app Docker build; dummy secrets for the fixture only | Approved |
+| D11 | S13 CI | ruff, default rules, 120-character lines | Approved |
+| D12 | S13 CI | Every CI step run locally first | Approved |
+| D13 | S13 CI | `requirements-dev.txt` for pytest and ruff | Approved |
+| D14 | S14 BA pack | Process maps as Mermaid, exported to PNG with Playwright | Approved |
+| D15 | S14 BA pack | Generic UK issuer as-is process; Amrit reviews accuracy | Approved |
+| D16 | S14 BA pack | To-be process: four routes, expected-loss ranking, confirm then block, audit log, MI, monitoring | Approved |
+| D17 | S14 BA pack | One-page problem statement | Approved |
+| D18 | S14 BA pack | Stakeholder register, RACI, power/interest grid (generic roles) | Approved |
+| D19 | S14 BA pack | Jira import CSV | **Dropped by Amrit** |
+| D20 | S14 BA pack | Requirements inside `user_stories.md` | Approved |
+| D21 | S14 BA pack | Traceability by file path | Approved |
+| D22 | S14 BA pack | UAT dry run by the build team; business sign-off left for Amrit | Approved |
+| D23 | S14 BA pack | Model card on SS1/23's five principles plus regulatory mapping | Approved |
+| D24 | S14 BA pack | One consolidated `decision_log.md` | Approved |
+| D25 | S14 BA pack | dbt lineage screenshot and data dictionary | Approved |
+| D26 | S14 BA pack | British English, plain-English pass, one data caveat per document | Approved |
+| D27 | S15 README | Two-minute story order | Approved |
+| D28 | S15 README | Capacity curve as the README chart | Approved |
+| D29 | S15 README | Scripted demo GIF | Approved |
+| D30 | S15 App | Theme proposal | **Replaced by Amrit:** keep the app basic and minimal, structured as a guided flow that hiring managers, banking professionals and BAs can follow |
+| D31 | S15 App | Replace deprecated `use_container_width` | Approved |
+| D32 | S15 README | One-command pipeline script | **Dropped by Amrit** |
+| D33 | S15 README | MIT licence for code; dataset not redistributed | Approved |
+| D34 | S15 README | Author section with LinkedIn | **Set aside:** needs Amrit's LinkedIn URL |
+| D35 | S15 README | CI badge and MLflow screenshot | **Dropped by Amrit** |
+| D36 | S16 Clean machine | Fresh clone, separate Compose project and ports, full rerun, tear down only the test stack | Approved |
+| D37 | S16 Clean machine | Reproducibility check against committed metrics | Approved |
+| D38 | S17 Pre-push | Whole-history audit including a secrets scan | Approved |
+| D39 | S17 Pre-push | Keep the commit email (already public on the first commit) | Default, to confirm at the pre-push report |
+| D40 | S17 Pre-push | Keep the Claude co-author lines | Default, to confirm at the pre-push report |
+| D41 | S17 Pre-push | Keep `CLAUDE.md` public | Default, to confirm at the pre-push report |
+| D42 | S17 Pre-push | Fix the remote URL's trailing slash | Approved |
+| D43 | S17 Push | Amrit pastes repo description and topics | Approved |
+| D44 | S17 Push | Amrit runs `git push` himself after the pre-push report | Approved |
+| D45 | S17 Push | One follow-up fix push allowed if CI fails only on GitHub | Approved |
+| D46 | Parked | Tableau `rpt_*` tables | **Parked until further notice** |
+| D47 | Housekeeping | Old Desktop copy deleted by Amrit, or on his explicit word | Approved |
+| D48 | Housekeeping | Update `CLAUDE.md` layout and definition of done at the end | Approved |
+| D49 | Housekeeping | Detailed report per section, then continue | Approved |

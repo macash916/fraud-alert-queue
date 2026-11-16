@@ -101,6 +101,15 @@ XGBoost scored ROC-AUC 0.9997 and PR-AUC 0.983 on the validation months (Jan to 
 | TC-44 | `docker compose up` starts the app with the database | `docker compose up -d --build app` | `fraud_app` healthy on 127.0.0.1:8501, queue loads | ✅ Pass |
 | TC-45 | No data or secrets in the app image | List `/srv` inside the container | Only the app's Python files, its requirements and the Streamlit config | ✅ Pass |
 
+## Monitoring
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-46 | Monthly drift report runs end to end | `src/drift.py` over the test months | 189 checks written to `monitoring.drift_monthly`, heatmap and MLflow run produced | ✅ Pass |
+| TC-47 | Model score is stable after go-live | Score PSI each month against the training months | Green every month | ✅ Pass: 0.005 to 0.036 |
+| TC-48 | Seasonal change is told apart from real change | December's red features compared with December 2019 | Seasonal features go green against last year | ✅ Pass: five December reds all 0.000 to 0.003 against Dec 2019 |
+| TC-49 | Monitor catches a feature that drifts by design | "Length of card history" PSI | Flagged | ✅ Flagged red every month, also against the same month last year; raised as a feature-design finding |
+
 ## Findings from testing
 
 - **91 of the 999 cards contain nothing but fraud.** They average 10 transactions over 1.7 days, and they are exactly the 91 cards that appear in only one of the two files. That's 904 transactions, about 9% of all fraud. These cards have no genuine history, so "amount vs average" is measured against earlier fraud, and a model could learn "new card means fraud". Real fraud on newly compromised or newly opened cards does exist, so this is plausible, but it needs watching in SHAP and goes in the decision log.
