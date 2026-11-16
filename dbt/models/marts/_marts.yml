@@ -41,3 +41,20 @@ models:
               arguments:
                 values: [0, 1]
                 quote: false
+
+  - name: fct_rules_baseline
+    description: >
+      Analyst-style rules baseline, one row per transaction. Flags each rule and routes the
+      payment to analyst review, in-app step-up or approve (stronger treatment wins).
+    columns:
+      - name: trans_num
+        data_tests: [unique, not_null]
+      - name: rules_route
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["analyst_review", "step_up", "approve"]
+
+  - name: rpt_rules_baseline_performance
+    description: Rules baseline volumes, hit rate, recall and fraud value caught, by period and route.

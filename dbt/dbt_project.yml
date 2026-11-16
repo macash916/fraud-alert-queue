@@ -11,6 +11,14 @@ model-paths: ["models"]
 test-paths: ["tests"]
 clean-targets: ["target", "logs"]
 
+# Rules baseline thresholds: named and editable, like a bank rules engine's parameters.
+# Chosen by profiling the TRAINING months only (see docs/decision_log.md).
+vars:
+  rule_amount_multiple: 10      # A2: amount at least this many times the card's earlier average
+  rule_high_value_usd: 500      # B2 and D1: "high value" payment, in US dollars
+  rule_night_start_hour: 22     # B2: night runs from 22:00 ...
+  rule_night_end_hour: 4        # ... to 04:00
+
 models:
   fraud_alert_queue:
     staging:

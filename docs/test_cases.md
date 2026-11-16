@@ -33,6 +33,14 @@ The features were first built as a SQL view and are now the dbt model `analytics
 | TC-13 | Velocity features are internally consistent | dbt test `assert_velocity_windows_consistent`: 1h count ≤ 24h count ≤ prior history, spend ≥ 0 | No violations | ✅ Pass |
 | TC-14 | Full dbt build | `dbt build`: 2 models and 26 data tests | All pass | ✅ Pass: 28 of 28 |
 
+## Rules baseline
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-15 | Every payment gets exactly one valid route | dbt tests: `rules_route` not null and one of analyst_review, step_up, approve; `trans_num` unique | All pass | ✅ Pass |
+| TC-16 | Routing follows the agreed priority (analyst wins over step-up) | dbt test `assert_rules_routing_priority` compares each route with its rule flags | No violations | ✅ Pass |
+| TC-17 | Rules weren't tuned on the test months | Thresholds chosen from training-month profiling only; train and test results compared | Similar performance in both periods | ✅ Pass: 82.0% of fraud value caught in train, 82.1% in test |
+
 ## Findings from testing
 
 - **91 of the 999 cards contain nothing but fraud.** They average 10 transactions over 1.7 days, and they are exactly the 91 cards that appear in only one of the two files. That's 904 transactions, about 9% of all fraud. These cards have no genuine history, so "amount vs average" is measured against earlier fraud, and a model could learn "new card means fraud". Real fraud on newly compromised or newly opened cards does exist, so this is plausible, but it needs watching in SHAP and goes in the decision log.
