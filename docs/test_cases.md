@@ -42,6 +42,17 @@ The features were first built as a SQL view and are now the dbt model `analytics
 | TC-16 | Routing follows the agreed priority (analyst wins over step-up) | dbt test `assert_rules_routing_priority` compares each route with its rule flags | No violations | ✅ Pass |
 | TC-17 | Rules weren't tuned on the test months | Thresholds chosen from training-month profiling only; train and test results compared | Similar performance in both periods | ✅ Pass: 82.0% of fraud value caught in train, 82.1% in test |
 
+## Model validation: leakage checks
+
+XGBoost scored ROC-AUC 0.9997 and PR-AUC 0.983 on the validation months (Jan to 21 Jun 2020). By project rule that is treated as a possible leak until proven otherwise. `src/leakage_checks.py` runs four checks with the best XGBoost settings; results are logged in the MLflow experiment `leakage-checks`.
+
+| ID | What is checked | How | Expected if leak-free | Result |
+|---|---|---|---|---|
+| TC-19 | The pipeline doesn't leak the label into features | Shuffle the fraud labels in the fit months, retrain, score validation | ROC-AUC about 0.5 | ✅ Pass: 0.459 |
+| TC-20 | The high score comes from the data, not from history windows | Train on amount, category and hour only (current payment, no history, no windows) | Near-perfect if the simulator makes fraud easy to separate | ✅ Explained: ROC-AUC 0.9975, PR-AUC 0.851. History features lift PR-AUC to 0.983 |
+| TC-21 | The result doesn't rest on the 91 fraud-only cards | Score validation without those cards | Little change | ✅ Pass: PR-AUC 0.981 against 0.983 |
+| TC-22 | No single feature dominates suspiciously | XGBoost share of total gain | Importance spread across plausible features | ✅ Pass: top is spend vs daily norm (31%), then hour (16%), grocery in-store (12%); card history count only 2% |
+
 ## Findings from testing
 
 - **91 of the 999 cards contain nothing but fraud.** They average 10 transactions over 1.7 days, and they are exactly the 91 cards that appear in only one of the two files. That's 904 transactions, about 9% of all fraud. These cards have no genuine history, so "amount vs average" is measured against earlier fraud, and a model could learn "new card means fraud". Real fraud on newly compromised or newly opened cards does exist, so this is plausible, but it needs watching in SHAP and goes in the decision log.

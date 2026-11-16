@@ -4,3 +4,7 @@ psycopg[binary]==3.2.3
 python-dotenv==1.2.4
 dbt-core==1.12.7
 dbt-postgres==1.11.0
+numpy==2.4.6
+scikit-learn==1.9.1
+xgboost==3.2.0
+mlflow==2.22.1

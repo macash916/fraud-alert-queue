@@ -28,7 +28,7 @@ services:
 
   # Experiment tracking and model registry: every training run is logged here.
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.17.2
+    image: ghcr.io/mlflow/mlflow:v2.22.1
     container_name: fraud_mlflow
     restart: unless-stopped
     command: >
