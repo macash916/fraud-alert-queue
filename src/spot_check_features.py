@@ -42,7 +42,15 @@ TOLERANCE = {
     "is_new_merchant": 0,
     "secs_since_last": 0,
     "hour_of_day": 0,
+    "amt_vs_category_avg": 0.00051,
+    "is_new_category": 0,
+    "hour_band_share": 0.00051,
+    "small_txn_count_24h": 0,
+    "spend_24h_vs_daily_avg": 0.00051,
 }
+
+SMALL_TXN_USD = 20     # must match dbt var small_txn_usd
+HOUR_BAND_HOURS = 4    # must match dbt var hour_band_hours
 
 
 def query(conn, sql: str, params=None) -> pd.DataFrame:
@@ -58,7 +66,25 @@ def card_token(cc_num: str) -> str:
     return hmac.new(key, cc_num.encode(), hashlib.sha256).hexdigest()
 
 
-def pandas_features(raw: pd.DataFrame) -> pd.DataFrame:
+def category_prior_averages(all_txns: pd.DataFrame) -> pd.Series:
+    """Average of all earlier payments in each category, across all cards.
+
+    'Earlier' means a strictly earlier timestamp, so payments at the same second don't count.
+    Returns a Series indexed by trans_num.
+    """
+    per_second = (all_txns.groupby(["category", "trans_ts"])["amt"]
+                  .agg(["sum", "count"]).reset_index().sort_values(["category", "trans_ts"]))
+    grouped = per_second.groupby("category")
+    # Running totals up to, but not including, this timestamp
+    per_second["prior_sum"] = grouped["sum"].cumsum() - per_second["sum"]
+    per_second["prior_count"] = grouped["count"].cumsum() - per_second["count"]
+    per_second["prior_avg"] = per_second["prior_sum"] / per_second["prior_count"].replace(0, np.nan)
+    merged = all_txns.merge(per_second[["category", "trans_ts", "prior_avg"]],
+                            on=["category", "trans_ts"], how="left")
+    return merged.set_index("trans_num")["prior_avg"]
+
+
+def pandas_features(raw: pd.DataFrame, category_prior_avg: pd.Series) -> pd.DataFrame:
     """Recalculate the features for one card using pandas and numpy only."""
     df = raw.sort_values(["trans_ts", "trans_num"]).reset_index(drop=True)
     ts = df["trans_ts"].to_numpy()
@@ -91,6 +117,26 @@ def pandas_features(raw: pd.DataFrame) -> pd.DataFrame:
     # Time since the previous transaction.
     df["secs_since_last"] = df["trans_ts"].diff().dt.total_seconds()
     df["hour_of_day"] = df["trans_ts"].dt.hour
+
+    # Amount vs the category's normal (all cards, strictly earlier payments)
+    df["amt_vs_category_avg"] = amt / df["trans_num"].map(category_prior_avg).to_numpy()
+
+    # First use of this category by this card
+    df["is_new_category"] = (df.groupby("category").cumcount() == 0).astype(int)
+
+    # Share of the card's earlier payments in the same time-of-day band
+    band = df["hour_of_day"] // HOUR_BAND_HOURS
+    df["hour_band_share"] = df.groupby(band).cumcount() / df["prior_txn_count"].replace(0, np.nan)
+
+    # Small payments in the previous 24 hours (same window logic as velocity)
+    small_running = np.concatenate([[0], np.cumsum(amt < SMALL_TXN_USD)])
+    df["small_txn_count_24h"] = small_running[before_now] - small_running[start_24h]
+
+    # (Previous 24h spend + this amount) / average daily spend so far, days floored at 1
+    prior_total = running_total[np.arange(len(df))]
+    days = ((df["trans_ts"] - df["trans_ts"].iloc[0]).dt.total_seconds() / 86400).clip(lower=1)
+    daily_avg = pd.Series(prior_total / days.to_numpy()).replace(0, np.nan)
+    df["spend_24h_vs_daily_avg"] = (df["amt_sum_24h"] + amt) / daily_avg
     return df
 
 
@@ -119,6 +165,8 @@ def compare(card: str, sql_df: pd.DataFrame, py_df: pd.DataFrame) -> dict:
 def main() -> None:
     with connect() as conn:
         cards = query(conn, PICK_CARDS_SQL)["cc_num"].tolist()
+        all_txns = query(conn, "SELECT trans_num, trans_ts, category, amt::float AS amt FROM raw_transactions")
+        category_prior_avg = category_prior_averages(all_txns)
         results = []
         for card in cards:
             raw = query(conn, "SELECT * FROM raw_transactions WHERE cc_num = %s", (card,))
@@ -126,7 +174,7 @@ def main() -> None:
                            (card_token(card),))
             if sql_df.empty:
                 raise SystemExit(f"Card **** {card[-4:]}: token not found in {FEATURES_TABLE}")
-            py_df = pandas_features(raw)[["trans_num", *TOLERANCE]]
+            py_df = pandas_features(raw, category_prior_avg)[["trans_num", *TOLERANCE]]
             results.append(compare(card, sql_df, py_df))
 
     summary = pd.DataFrame(results)

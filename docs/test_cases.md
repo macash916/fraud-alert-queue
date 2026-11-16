@@ -19,8 +19,9 @@ The features were first built as a SQL view and are now the dbt model `analytics
 |---|---|---|---|---|
 | TC-05 | One feature row per transaction | Count `fct_transaction_features` against `raw_transactions` (automated: `assert_row_counts_reconcile`) | 1,852,394 in both | ✅ Pass |
 | TC-06 | Features never see the current or later transactions | Count rows with no history (`amt_vs_avg`, `secs_since_last` NULL) | Exactly one per card: 999 | ✅ Pass (automated: `assert_first_transaction_has_no_history`) |
-| TC-07 | SQL features match an independent calculation | `src/spot_check_features.py` recalculates all 9 features in pandas for 5 cards (3 with the most fraud, 2 busiest with none) and compares every transaction | 0 mismatches | ✅ Pass: 105,579 values, 0 mismatches |
+| TC-07 | SQL features match an independent calculation | `src/spot_check_features.py` recalculates all 14 features in pandas for 5 cards (3 with the most fraud, 2 busiest with none) and compares every transaction | 0 mismatches | ✅ Pass: 164,234 values, 0 mismatches (14 features; 105,579 values when there were 9) |
 | TC-08 | TC-07 can actually fail | Plant a leak in the pandas version (count the current transaction in its own 24h window) and rerun | Mismatches reported, exit code 1 | ✅ Pass: 23,462 mismatches flagged |
+| TC-18 | Lever B features stay in valid ranges | dbt test `assert_new_features_in_range`: shares 0–1, ratios positive, small-payment count ≤ all payments, first payment has no history | No violations | ✅ Pass |
 
 ## Data protection and dbt build
 

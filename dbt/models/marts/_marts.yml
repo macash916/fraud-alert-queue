@@ -35,6 +35,22 @@ models:
                 quote: false
       - name: secs_since_last
         description: Seconds since this card's previous transaction. Null on a card's first.
+      - name: amt_vs_category_avg
+        description: This amount divided by the average of all earlier payments in the same category, across all cards.
+      - name: is_new_category
+        description: 1 if this card has not been used in this category before.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+                quote: false
+      - name: hour_band_share
+        description: Share of the card's earlier payments in the same 4-hour time-of-day band. Low means an unusual hour for this customer.
+      - name: small_txn_count_24h
+        description: Payments under $20 on this card in the previous 24 hours (card testing).
+        data_tests: [not_null]
+      - name: spend_24h_vs_daily_avg
+        description: (Previous 24h spend + this amount) divided by the card's average daily spend so far.
       - name: is_fraud
         data_tests:
           - accepted_values:

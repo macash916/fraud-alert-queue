@@ -1,6 +1,6 @@
 # Python 3.11. Install with: python -m venv .venv && .venv/bin/pip install -r requirements.txt
 pandas==2.2.3
 psycopg[binary]==3.2.3
-python-dotenv==1.0.1
+python-dotenv==1.2.4
 dbt-core==1.12.7
 dbt-postgres==1.11.0

@@ -19,6 +19,10 @@ vars:
   rule_night_start_hour: 22     # B2: night runs from 22:00 ...
   rule_night_end_hour: 4        # ... to 04:00
 
+  # Feature settings
+  small_txn_usd: 20             # "small" payment for the card-testing burst feature
+  hour_band_hours: 4            # width of the time-of-day bands for the unusual-hour feature
+
 models:
   fraud_alert_queue:
     staging:
