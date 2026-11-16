@@ -1,6 +1,6 @@
 """Train and compare the fraud models on the validation months.
 
-Design (agreed decisions are in CLAUDE.md, "Modelling decisions"):
+Design (agreed decisions are in docs/decision_log.md, E12 to E16):
   - Fit on calendar 2019; compare on 1 Jan to 21 Jun 2020 (the rest of the training file).
     The test months (21 Jun to Dec 2020) are NOT read here at all.
   - No class reweighting: models learn the true fraud rate, so probabilities stay honest.
@@ -88,6 +88,8 @@ def load_training_file(source_file: str = "fraudTrain.csv") -> pd.DataFrame:
         FROM analytics.fct_transaction_features f
         JOIN analytics.fct_rules_baseline r USING (trans_num)
         WHERE f.source_file = '{source_file}'
+        -- Fixed row order, so a rebuilt database gives an identical model and results (TC-68).
+        ORDER BY f.trans_ts, f.trans_num
     """
     with connect() as conn, conn.cursor() as cur:
         cur.execute(sql)

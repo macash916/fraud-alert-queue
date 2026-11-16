@@ -12,14 +12,14 @@ Should the fraud team replace its rules with the model-led queue, and if so, wit
 
 | | No controls | Rules (today) | Model, like-for-like | **Model, four routes** |
 |---|---|---|---|---|
-| Fraud $ stopped by the route itself | 0% | 82.1% | 99.9% | 99.8% |
+| Fraud $ stopped by the route itself | 0% | 82.1% | 99.9% | 99.9% |
 | Fraud $ protected, including card blocks | 0% | 93.2% | 99.9% | 99.9% |
-| Fraud losses | $1,133,325 | $77,535 | $715 | $960 |
-| Analyst alerts worked per day | 0 | 17.6 | 9.6 | **3.2** |
-| Analyst hit rate | n/a | 10% | 16% | 10% |
-| Customer step-ups per day (genuine) | 0 | 1.7 (1.7) | 2.0 (1.9) | 14.0 (13.8) |
+| Fraud losses | $1,133,325 | $77,535 | $711 | $783 |
+| Analyst alerts worked per day | 0 | 17.6 | 9.3 | **3.2** |
+| Analyst hit rate | n/a | 10% | 17% | 10% |
+| Customer step-ups per day (genuine) | 0 | 1.7 (1.7) | 2.1 (2.1) | 13.3 (13.2) |
 | Genuine cards declined per day | 0 | 0 | 0 | 0.1 |
-| **Total cost over the test months** | $1,133,325 | $86,804 | $5,889 | **$4,393** |
+| **Total cost over the test months** | $1,133,325 | $86,807 | $5,745 | **$4,136** |
 | **Total cost, annualised** | $2.13m | $163k | $11k | **$8k** |
 
 Total cost = fraud losses + analyst time + step-up cost + false-decline cost.
@@ -28,26 +28,26 @@ Total cost = fraud losses + analyst time + step-up cost + false-decline cost.
 
 ## What the numbers say
 
-1. **The model's gain over the rules is about $155k a year on this book** (annualised from 194 days), roughly **$155 per card per year**. The rules already protect 93% of fraud value once confirm then block is counted; the model closes most of the remaining 7%.
-2. **Most of the gain comes from better ranking, not from the extra routes.** Like-for-like already cuts cost from $86.8k to $5.9k. Four routes saves a further $1.5k, mainly by needing a third as many analyst reviews.
-3. **The four-route policy trades analyst time for customer friction:** 3 analyst reviews a day instead of 10, but about 14 genuine customers a day asked to confirm a payment in their app (0.5% of the day's payments), against 2.
+1. **The model's gain over the rules is about $156k a year on this book** (annualised from 194 days), roughly **$156 per card per year**. The rules already protect 93% of fraud value once confirm then block is counted; the model closes most of the remaining 7%.
+2. **Most of the gain comes from better ranking, not from the extra routes.** Like-for-like already cuts cost from $86.8k to $5.7k. Four routes saves a further $1.6k, mainly by needing a third as many analyst reviews.
+3. **The four-route policy trades analyst time for customer friction:** 3 analyst reviews a day instead of 9, but about 13 genuine customers a day asked to confirm a payment in their app (0.5% of the day's payments), against 2.
 4. **Analyst capacity stops being the constraint.** The model protects about 98% of fraud value with roughly 2 analyst alerts a day (`figures/capacity_curve.png`). The rules need about 18 a day to reach 93%.
 
 ## How much the answer depends on the assumptions
 
-`figures/sensitivity_tornado.png` moves each assumption down and up. Base saving: **$155k a year**.
+`figures/sensitivity_tornado.png` moves each assumption down and up. Base saving: **$156k a year**.
 
 | Assumption (low / high) | Saving at low | Saving at high |
 |---|---|---|
-| Loss rate on missed fraud (50% / 100%) | $85k | $155k |
-| Block delay (15 min / 4 hours) | $141k | $206k |
+| Loss rate on missed fraud (50% / 100%) | $85k | $156k |
+| Block delay (15 min / 4 hours) | $141k | $207k |
 | Minutes per review (2.5 / 7.5) | $148k | $163k |
 | Analyst hourly cost ($16 / $48) | $148k | $163k |
 | Fraudster pass rate on step-up (5% / 20%) | $156k | $157k |
 | Step-up cost ($0.25 / $0.75) | $156k | $155k |
-| False-decline cost ($10 / $30) | $155k | $155k |
-| Genuine confirm rate (90% / 99%) | $155k | $155k |
-| Analyst capacity (10 / 32 a day) | $155k | $155k |
+| Genuine confirm rate (90% / 99%) | $155k | $156k |
+| False-decline cost ($10 / $30) | $156k | $156k |
+| Analyst capacity (10 / 32 a day) | $156k | $156k |
 
 - **The case is positive under every assumption tested.** The lowest value is $85k, when the bank recovers half of each missed fraud.
 - **The two assumptions that matter are how much of a missed fraud the bank actually loses, and how fast a confirmed fraud blocks the card.** A slower block helps the model's case, because the rules rely more on blocks to catch follow-on fraud.
@@ -55,7 +55,7 @@ Total cost = fraud losses + analyst time + step-up cost + false-decline cost.
 
 ## Calibration
 
-`figures/calibration.png`: predicted probabilities track actual fraud rates on both the validation and test months, which is what expected-loss ranking relies on. In the middle bands the model is slightly cautious (payments scored around 0.6 turn out to be fraud about 69% of the time), so it understates rather than overstates risk there.
+`figures/calibration.png`: predicted probabilities track actual fraud rates on both the validation and test months, which is what expected-loss ranking relies on. In the middle bands the model is slightly cautious (payments scored around 0.6 turn out to be fraud about 66% of the time), so it understates rather than overstates risk there.
 
 ## Recommendation
 

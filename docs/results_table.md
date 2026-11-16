@@ -4,7 +4,7 @@
 |---|---|---|---|---|---|---|---|
 | Rules (A2, B2) | 20.9 | 24.8% | 47.0% | n/a | 80.6% | 92.5% | $94,596 |
 | Logistic regression | 20.9 | 36.7% | 69.4% | 0.574 | 85.9% | 87.9% | $144,706 |
-| XGBoost (champion) | 20.9 | 52.1% | 98.6% | 0.974 | 99.8% | 99.9% | $7,033 |
+| XGBoost (champion) | 20.9 | 52.1% | 98.6% | 0.974 | 99.8% | 99.9% | $7,027 |
 
 Test months (21 Jun to 31 Dec 2020, 555,719 payments, 2,145 frauds), each approach reviewing the same 4,058 payments (20.9 a day). Total cost = fraud losses + analyst time, with a confirmed fraud blocking the card after one hour. Simulated data; US dollars. Produced by `src/results_table.py`.
 

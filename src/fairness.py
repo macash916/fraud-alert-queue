@@ -51,6 +51,8 @@ def load() -> pd.DataFrame:
         JOIN scoring.decisions d USING (trans_num)
         JOIN analytics_restricted.fairness_attributes a USING (trans_num)
         WHERE s.source_file = 'fraudTest.csv'
+        -- Fixed row order, so a rebuilt database gives an identical model and results (TC-68).
+        ORDER BY s.trans_ts, s.trans_num
     """
     with connect() as conn, conn.cursor() as cur:
         cur.execute(sql)

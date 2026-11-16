@@ -57,6 +57,8 @@ def load_period(period: str) -> pd.DataFrame:
         JOIN analytics.fct_rules_baseline r USING (trans_num)
         JOIN scoring.model_scores s USING (trans_num)
         WHERE s.model_name = 'xgboost' AND s.period = %s
+        -- Fixed row order, so a rebuilt database gives an identical model and results (TC-68).
+        ORDER BY f.trans_ts, f.trans_num
     """
     with connect() as conn, conn.cursor() as cur:
         cur.execute(sql, (period,))

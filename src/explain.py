@@ -134,6 +134,8 @@ def load_alerts() -> pd.DataFrame:
         FROM scoring.decisions d
         JOIN analytics.stg_transactions s USING (trans_num)
         WHERE d.route <> 'approve'
+        -- Fixed row order, so a rebuilt database gives an identical model and results (TC-68).
+        ORDER BY s.trans_ts, d.trans_num
     """
     with connect() as conn, conn.cursor() as cur:
         cur.execute(sql)
@@ -191,7 +193,12 @@ ON CONFLICT (trans_num) DO UPDATE SET
     fraud_probability = EXCLUDED.fraud_probability, expected_loss_usd = EXCLUDED.expected_loss_usd,
     route = EXCLUDED.route, reason_1 = EXCLUDED.reason_1, reason_2 = EXCLUDED.reason_2,
     reason_3 = EXCLUDED.reason_3, reason_detail = EXCLUDED.reason_detail, model_version = EXCLUDED.model_version
+WHERE app.alerts.status = 'open'   -- a decided alert keeps the score and reasons the analyst saw
 """
+
+# After a model change, open alerts the new model no longer raises leave the queue.
+# Decided alerts are never removed: they are the audit trail.
+REMOVE_STALE = "DELETE FROM app.alerts WHERE status = 'open' AND model_version <> %s"
 
 
 def plot_importance(importance: pd.Series) -> None:
@@ -243,6 +250,8 @@ def main() -> None:
     with connect() as conn, conn.cursor() as cur:
         cur.execute(ALERTS_DDL)
         cur.executemany(UPSERT, rows)
+        cur.execute(REMOVE_STALE, (str(version),))
+        print(f"Removed {cur.rowcount:,} open alerts from earlier model versions")
         conn.commit()
         cur.execute("SELECT route, count(*) FROM app.alerts GROUP BY route ORDER BY 2 DESC")
         print("app.alerts by route:", dict(cur.fetchall()))

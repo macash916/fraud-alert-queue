@@ -30,6 +30,8 @@ def load() -> pd.DataFrame:
         JOIN scoring.model_scores l ON l.trans_num = s.trans_num AND l.model_name = 'logistic_regression'
                                     AND l.period = 'test'
         WHERE s.source_file = 'fraudTest.csv'
+        -- Fixed row order, so a rebuilt database gives an identical model and results (TC-68).
+        ORDER BY s.trans_ts, s.trans_num
     """
     with connect() as conn, conn.cursor() as cur:
         cur.execute(sql)

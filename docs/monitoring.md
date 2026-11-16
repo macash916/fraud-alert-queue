@@ -22,20 +22,20 @@ PSI in one line: it splits a feature into ten bands using the training data, the
 
 ![PSI by feature and month](figures/drift_psi.png)
 
-**The model's output is stable and it is still doing its job.** The score's PSI stays between 0.01 and 0.04 every month (green), and the routes stop at least 99.8% of fraud value in every month.
+**The model's output is stable and it is still doing its job.** The score's PSI stays below 0.04 every month (green), and the routes stop at least 99.8% of fraud value in every month.
 
 Three things were flagged:
 
 1. **December: five "last 24 hours" features go red** (payments in last 24h 0.60, spend in last 24h 0.39, 24h spend vs usual daily 0.30, small payments 0.27; time since last payment amber at 0.21). This is Christmas shopping: payments per day double in December. Against December 2019 every one of these scores 0.000 to 0.003, so the change is seasonal, not a change in customers.
-   - **What it does to operations:** in December the analyst hit rate falls to 16% (21% to 36% in the other months) and step-ups rise to 22 a day (12 to 17). Busier cards look more unusual, so the model asks more genuine customers to confirm payments.
+   - **What it does to operations:** in December the analyst hit rate falls to 16% (21% to 38% in the other months) and step-ups rise to 21 a day (12 to 15). Busier cards look more unusual, so the model asks more genuine customers to confirm payments.
    - **Action:** no retrain. Plan December staffing and step-up capacity in advance, and have the model owner confirm each year that December matches the previous December.
 
 2. **"Length of card history" is red every month** (PSI 3.6 to 6.2). This is built into the feature, not a change in customers: it counts a card's earlier payments, so it only ever grows. The median card had 777 earlier payments in the training months and 2,139 in the test months, beyond most of what the model saw in training.
-   - **Why it hasn't hurt yet:** the feature carries 3.5% of the model's explanation (SHAP), and its useful signal is at the low end (new cards), which is still in range.
+   - **Why it hasn't hurt yet:** the feature carries 3.3% of the model's explanation (SHAP), and its useful signal is at the low end (new cards), which is still in range.
    - **Action:** raise with the model owner. A challenger should replace the raw count with a capped or banded version (for example new, under 50, 50 or more) that cannot drift by construction. No change now: the scope is frozen, and the score and outcomes are stable.
    - **Lesson for feature design:** any running count needs a cap before it goes into a model.
 
-3. **Fairness watch item: amber in June and December.** Women's interruption rate was 1.13x and 1.17x the overall rate in those months (1.06x to 1.08x otherwise), below the 1.25x red line. It moves with the busy periods, which fits the fairness audit's finding that the population-wide "amount vs category norm" feature drives the gap.
+3. **Fairness watch item: amber in June, October, November and December.** Women's interruption rate was 1.10x to 1.20x the overall rate in those months (1.06x to 1.07x otherwise), below the 1.25x red line. It is highest in the busy periods (June and December), which fits the fairness audit's finding that the population-wide "amount vs category norm" feature drives the gap.
    - **Action:** keep monthly; it supports the customer-specific category norm challenger already recommended in `fairness_audit.md`.
 
 ## What happens when something goes red (runbook)

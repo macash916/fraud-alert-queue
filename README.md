@@ -5,6 +5,8 @@ A fraud operations team gets more alerts than its analysts can work. **Which ale
 This project answers that end to end: a SQL feature layer in dbt, an XGBoost model that is checked hard for leakage, a cost-based routing decision, three plain-English reasons on every alert, and a Streamlit queue where analysts record decisions with a full audit trail. The BA pack (process maps, user stories, traceability, UAT, a model card on PRA SS1/23) sits alongside it.
 
 > **Simulated data.** Everything runs on the Kaggle Sparkov dataset: 1.85 million card payments on 999 US cards, 2019 and 2020. The simulator makes fraud much easier to spot than a real book does, so the results show the method and the controls. They are not a forecast of production performance. Money is in US dollars because the data is US-simulated.
+>
+> **Why UK rules on US data?** The project designs the alert queue for a UK card issuer, so it applies the controls that issuer would answer to: FCA Consumer Duty, the Equality Act, PRA SS1/23, UK GDPR and Strong Customer Authentication. Those rules follow the bank and its customers, not the currency; a UK bank's customer paying in dollars abroad is covered by all of them. No public UK card-fraud dataset of this size exists, so US simulated data stands in, and the method carries over unchanged to a sterling book.
 
 ![Walking one alert: overview, queue, reasons, decision, MI](docs/figures/demo.gif)
 
@@ -24,7 +26,7 @@ This project answers that end to end: a SQL feature layer in dbt, an XGBoost mod
 |---|---|---|---|---|---|
 | Rules (A2, B2) | 24.8% | 47.0% | n/a | 80.6% | $94,596 |
 | Logistic regression | 36.7% | 69.4% | 0.574 | 85.9% | $144,706 |
-| **XGBoost (champion)** | **52.1%** | **98.6%** | **0.974** | **99.8%** | **$7,033** |
+| **XGBoost (champion)** | **52.1%** | **98.6%** | **0.974** | **99.8%** | **$7,027** |
 
 Test months 21 Jun to 31 Dec 2020 (555,719 payments, 2,145 frauds), used once. Total cost is fraud losses plus analyst time, with a confirmed fraud blocking the card after one hour. Logistic regression costs more than the rules despite better precision: its alerts reach fewer of the compromised cards, so fewer cards get blocked before the next fraud. Full table: [docs/results_table.md](docs/results_table.md).
 
@@ -32,13 +34,13 @@ The model also needs far fewer analysts for the same protection. It reaches abou
 
 ![Fraud value protected against analyst alerts per day, model against rules](docs/figures/capacity_curve.png)
 
-Against the rules, the four-route policy saves about $155k a year on this book, and the saving stays positive under every assumption in the sensitivity analysis (lowest case $85k). See [docs/business_case.md](docs/business_case.md).
+Against the rules, the four-route policy saves about $156k a year on this book, and the saving stays positive under every assumption in the sensitivity analysis (lowest case $85k). See [docs/business_case.md](docs/business_case.md).
 
 ## Why the numbers are believed
 
 A PR-AUC of 0.974 is treated as a bug until explained. The checks ([docs/test_cases.md](docs/test_cases.md), TC-19 to TC-22):
 
-- Shuffled labels give ROC-AUC 0.46, so no hidden label is reaching the model.
+- Shuffled labels give ROC-AUC 0.42, so no hidden label is reaching the model.
 - A model given only amount, category and hour, with no history at all, already scores ROC-AUC 0.9975. The simulator makes fraud easy to separate; that is the honest reason the numbers are high.
 - Training and testing are split by time. Features are SQL window functions over each card's *earlier* payments only, and a planted leak is caught by a dbt test.
 
@@ -48,7 +50,7 @@ A PR-AUC of 0.974 is treated as a bug until explained. The checks ([docs/test_ca
 |---|---|
 | Card data (PCI DSS) | Card numbers exist only in the raw table. dbt staging replaces them with a keyed HMAC-SHA256 token; the key lives in `.env` |
 | Personal data (UK GDPR) | Name, address, date of birth and gender never reach the features. Age and gender sit in a restricted schema used only for the fairness audit |
-| Fair treatment (Consumer Duty, Equality Act) | Interruption and detection rates by age band and gender with confidence intervals. No group is flagged; one watch item (genuine women interrupted at 62 against 50 per 10,000 for men) is explained and monitored |
+| Fair treatment (Consumer Duty, Equality Act) | Interruption and detection rates by age band and gender with confidence intervals. No group is flagged; one watch item (genuine women interrupted at 61 against 47 per 10,000 for men) is explained and monitored |
 | Model risk (PRA SS1/23) | Model card, decision log of every design choice, MLflow run history and registry, monthly drift and outcome monitoring with red/amber/green thresholds |
 | Audit trail | Every decision records who, when, the score shown, the route and the model version, in an append-only log |
 | Automated decisions (Article 22) | Every automatic decline is reviewed by an analyst, who can reinstate the customer |
@@ -66,7 +68,22 @@ scores ──> cost-based routing ──> SHAP reasons ──> app.alerts ──
                                                               └─> monthly drift monitoring
 ```
 
-PostgreSQL 16, dbt-postgres, Python 3.11 (pandas, scikit-learn, XGBoost, SHAP), MLflow, Streamlit, Docker Compose, pytest and ruff, GitHub Actions.
+## Tech stack
+
+| Layer | Tool | Used for |
+|---|---|---|
+| Database | PostgreSQL 16 | System of record: raw payments, features, scores, alerts and analyst decisions |
+| Data transformation | dbt (dbt-core 1.12, dbt-postgres) and SQL | Staging with card tokenisation, leak-free features (window functions, CTEs), rules baseline, data tests, lineage |
+| Analysis and modelling | Python 3.11: pandas, NumPy, scikit-learn, XGBoost | Logistic regression baseline and the XGBoost champion, time-split validation |
+| Explainability | SHAP | Three plain-English reasons per alert; global importance |
+| Experiment tracking | MLflow 2.22 | Every training run logged; model registry with a champion alias |
+| Analyst app | Streamlit, Altair | Alert queue with decision write-back; MI page |
+| Charts | Matplotlib | Capacity curve, calibration, sensitivity, fairness and drift figures |
+| Infrastructure | Docker and Docker Compose | One command starts PostgreSQL, MLflow and the app |
+| Quality | pytest, ruff, GitHub Actions | Unit tests, SQL feature tests on a fixture, lint, CI on every push |
+| Security checks | gitleaks | Secrets scan of the whole git history before publishing |
+| Documentation | Markdown, Mermaid, Playwright | BA pack, process maps, the demo recording |
+| Version control | Git and GitHub | Small commits, one per delivered piece of work |
 
 ## How to run it
 
@@ -161,6 +178,7 @@ Optional: `src/leakage_checks.py` reruns the leakage diagnostics and `src/spot_c
 ## Author
 
 Amrit Sharma: business analyst, MSc Business Analytics (Durham University), 15 months in card-fraud operations. The process design, the routing tiers and the scope decisions come from that operations work. Built with Claude Code as an AI pair programmer; who decided what is recorded in the [decision log](docs/decision_log.md).
-<!-- D34: LinkedIn link to be added by Amrit -->
+
+[LinkedIn](https://www.linkedin.com/in/amrit-s-74974a97/)
 
 Licence: [MIT](LICENSE), for the code only. The Kaggle dataset is not redistributed here; download it from Kaggle under its own terms.

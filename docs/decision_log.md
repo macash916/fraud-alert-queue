@@ -84,7 +84,7 @@ Every material design decision, the options considered, the reason, and who made
 | D16 | S14 BA pack | To-be process: four routes, expected-loss ranking, confirm then block, audit log, MI, monitoring | Approved |
 | D17 | S14 BA pack | One-page problem statement | Approved |
 | D18 | S14 BA pack | Stakeholder register, RACI, power/interest grid (generic roles) | Approved |
-| D19 | S14 BA pack | Jira import CSV | **Dropped by Amrit** |
+| D19 | S14 BA pack | Jira import CSV | **Dropped by Amrit** (briefly reconsidered on 16 Nov, see D51) |
 | D20 | S14 BA pack | Requirements inside `user_stories.md` | Approved |
 | D21 | S14 BA pack | Traceability by file path | Approved |
 | D22 | S14 BA pack | UAT dry run by the build team; business sign-off left for Amrit | Approved |
@@ -99,22 +99,25 @@ Every material design decision, the options considered, the reason, and who made
 | D31 | S15 App | Replace deprecated `use_container_width` | Approved |
 | D32 | S15 README | One-command pipeline script | **Dropped by Amrit** |
 | D33 | S15 README | MIT licence for code; dataset not redistributed | Approved |
-| D34 | S15 README | Author section with LinkedIn | **Set aside:** needs Amrit's LinkedIn URL |
+| D34 | S15 README | Author section with LinkedIn | Approved; link supplied by Amrit |
 | D35 | S15 README | CI badge and MLflow screenshot | **Dropped by Amrit** |
 | D36 | S16 Clean machine | Fresh clone, separate Compose project and ports, full rerun, tear down only the test stack | Approved |
 | D37 | S16 Clean machine | Reproducibility check against committed metrics | Approved |
 | D38 | S17 Pre-push | Whole-history audit including a secrets scan | Approved |
 | D39 | S17 Pre-push | Keep the commit email (already public on the first commit) | Default, to confirm at the pre-push report |
-| D40 | S17 Pre-push | Keep the Claude co-author lines | Default, to confirm at the pre-push report |
-| D41 | S17 Pre-push | Keep `CLAUDE.md` public | Default, to confirm at the pre-push report |
+| D40 | S17 Pre-push | Claude co-author lines removed from commit messages; AI assistance stays disclosed in the README and this log | Amrit |
+| D41 | S17 Pre-push | `CLAUDE.md` (the AI assistant's project brief) kept local only: removed from the repository and its history | Amrit |
 | D42 | S17 Pre-push | Fix the remote URL's trailing slash | Approved |
 | D43 | S17 Push | Amrit pastes repo description and topics | Approved |
 | D44 | S17 Push | Amrit runs `git push` himself after the pre-push report | Approved |
 | D45 | S17 Push | One follow-up fix push allowed if CI fails only on GitHub | Approved |
 | D46 | Parked | Tableau `rpt_*` tables | **Parked until further notice** |
 | D47 | Housekeeping | Old Desktop copy deleted by Amrit, or on his explicit word | **Parked by Amrit:** kept until he says otherwise |
-| D48 | Housekeeping | Update `CLAUDE.md` layout and definition of done at the end | Approved |
+| D48 | Housekeeping | Update the local project brief's layout and definition of done at the end | Approved |
 | D49 | Housekeeping | Detailed report per section, then continue | Approved |
+| D50 | Pre-push | Fix the training row order found by the clean-machine rerun (B-03); retrain and register the champion as version 2; refresh the published figures | Amrit |
+| D51 | Pre-push | Jira backlog reconsidered and dropped again: the user stories, traceability matrix and UAT script already cover the agile artefacts, and a solo two-day build has no sprint history to show | Amrit |
+| D52 | Pre-push | Keep US dollars and UK controls, and say why in the README and model card (the rules follow the bank, not the currency) | Amrit |
 
 ## 4. Decisions made while building S12 to S14 (proposed by Claude under the batch approval; for Amrit's review)
 

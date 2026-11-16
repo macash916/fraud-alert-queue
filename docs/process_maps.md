@@ -24,7 +24,7 @@ The as-is map is a **typical UK card-issuer process**, drawn from operations exp
 |---|---|---|
 | G1 | The analyst's hour goes to the most money at risk | At the same 21 alerts a day, hit rate rises from 24.8% to 52.1% and fraud value caught from 80.6% to 99.8% (`results_table.md`) |
 | G2 | Genuine customers confirm in their banking app instead of phoning | Medium-risk payments go to in-app step-up; only non-responders reach an analyst |
-| G3 | Every alert carries three plain-English reasons | 100% of 5,245 alerts; reasons tested for direction and wording |
+| G3 | Every alert carries three plain-English reasons | 100% of 5,129 alerts; reasons tested for direction and wording |
 | G4 | The model is watched, not trusted blindly | Monthly drift, outcome and fairness checks with an owner and a runbook (`monitoring.md`) |
 
 ## What changes for each role

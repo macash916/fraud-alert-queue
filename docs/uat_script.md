@@ -8,6 +8,7 @@
 - **Dry run by the build team: 16 Nov 2026.** All scenarios pass after one fix (UAT-10, below).
 - **Business sign-off: pending.** The tester and sign-off columns are deliberately left for a business tester (Amrit, as the person with fraud-operations experience); the build team does not sign its own work.
 - The dry-run decisions were removed afterwards, so the queue starts clean.
+- The dry run used model version 1. Version 2 (same settings, fixed row order) replaced it later on 16 Nov, so scores and expected losses in the queue differ slightly from those recorded below; the business tester should record what they see.
 
 | ID | Story | Scenario | Steps | Expected result | Dry run (build team) | Business tester | Pass / fail | Date |
 |---|---|---|---|---|---|---|---|---|

@@ -11,7 +11,7 @@ Each requirement traced from the user story that needs it, to the tests that che
 | FR-03 Three strongest reasons per alert, from SHAP | US-02 | TC-30, TC-31, UAT-03 | `src/explain.py`; `app.alerts` (`reason_1` to `reason_3`, `reason_detail`) |
 | FR-04 Reason wording states direction and handles missing history | US-02 | TC-33, TC-54 | `tests/test_reasons.py`; finding in `test_cases.md` |
 | FR-05 Confirm fraud or clear, with a note, written back | US-03 | TC-39, TC-40, TC-42, UAT-04, UAT-05, UAT-08 | `app/db.py` (`record_decision`); `app.alerts` |
-| FR-06 Close only open alerts; append every decision to an audit log | US-03, US-13 | TC-41, TC-65, UAT-06, UAT-10 | `app.alert_decision_log`; `app/queue_page.py` (`decide`); defect record in `uat_script.md` |
+| FR-06 Close only open alerts; append every decision to an audit log | US-03, US-13 | TC-41, TC-65, TC-70, UAT-06, UAT-10 | `app.alert_decision_log`; `app/queue_page.py` (`decide`); defect record in `uat_script.md` |
 | FR-07 Show the card's other alerts | US-04 | TC-38, UAT-03 | `app/db.py` (`card_alerts`) |
 | FR-08 Route each payment to its cheapest expected action | US-05, US-06 | TC-28, TC-55, UAT-05, UAT-09 | `src/decisioning.py` (`action_costs`, `four_route`); `scoring.decisions`; `process_to_be.png` |
 | FR-09 Respect analyst capacity | US-06 | TC-27, TC-55 | `src/decisioning.py` (`four_route`); `config/decision_params.yaml` |
@@ -38,4 +38,4 @@ Each requirement traced from the user story that needs it, to the tests that che
 
 ## Coverage check
 
-Every story US-01 to US-15 maps to at least one requirement, and every requirement to at least one test. TC-68 (clean-machine rerun) and TC-69 (pre-push secrets scan) are completed in S16 and S17.
+Every story US-01 to US-15 maps to at least one requirement, and every requirement to at least one test. TC-68 (clean-machine rerun), TC-69 (pre-push secrets scan) and TC-70 (queue refresh after a model change) were completed before publishing.

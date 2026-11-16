@@ -49,10 +49,6 @@ def fraud_only_cards() -> set[str]:
 
 def main() -> None:
     df = load_training_file()
-    with connect() as conn, conn.cursor() as cur:   # card token, for check 4
-        cur.execute("SELECT trans_num, card_token FROM analytics.fct_transaction_features "
-                    "WHERE source_file = 'fraudTrain.csv'")
-        df = df.merge(pd.DataFrame(cur.fetchall(), columns=["trans_num", "card_token"]), on="trans_num")
     fit = df[df["trans_ts"] < FIT_END].reset_index(drop=True)
     valid = df[df["trans_ts"] >= FIT_END].reset_index(drop=True)
     categories = sorted(fit["category"].unique())
