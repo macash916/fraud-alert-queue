@@ -1,0 +1,26 @@
+# Decision assumptions for the alert queue. Every number here is an ASSUMPTION, not data.
+# Change any value and rerun:  .venv/bin/python src/decisioning.py
+# The sensitivity analysis moves each one up and down to show how much the answer depends on it.
+# Money is in US dollars (the dataset is US-simulated).
+
+analyst:
+  hourly_cost_usd: 32           # fully loaded cost of a fraud analyst hour (salary, overheads)
+  minutes_per_review: 5         # time to work one alert (from the project brief)
+  alerts_per_day: 21            # analyst capacity, set equal to the rules' volume for a fair comparison
+
+step_up:                        # in-app verification: the customer confirms the payment in their banking app
+  cost_per_challenge_usd: 0.50  # messaging plus customer friction for each challenge
+  alerts_per_day: 2             # step-up budget for the like-for-like comparison (the rules' volume)
+  genuine_confirm_rate: 0.95    # genuine customers who confirm; the rest don't respond and go to an analyst
+  fraud_pass_rate: 0.10         # fraudsters who get through (stolen phone, or the customer is tricked)
+
+decline:
+  false_decline_cost_usd: 20    # cost of declining and blocking a genuine customer's card
+                                # (reissue, lost spend, complaint and churn risk)
+
+fraud:
+  loss_rate: 1.0                # share of a missed fraud's amount the bank loses (1.0 = full chargeback loss)
+  block_delay_hours: 1          # time from an analyst alert to the card being blocked if fraud is confirmed
+
+reporting:
+  random_seed: 42               # fixes which step-up challenges succeed, so results are repeatable

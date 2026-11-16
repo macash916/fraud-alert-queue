@@ -61,6 +61,15 @@ XGBoost scored ROC-AUC 0.9997 and PR-AUC 0.983 on the validation months (Jan to 
 | TC-24 | Probabilities stay calibrated when the fraud rate shifts | Mean predicted fraud rate against actual on the test months | Close | ✅ Pass: 0.380% predicted, 0.386% actual |
 | TC-25 | Scores are stored for every scored payment | Row count of `scoring.model_scores` | 371,825 validation + 2 × 555,719 test = 1,483,263 | ✅ Pass |
 
+## Decisioning
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-26 | Probabilities are calibrated by score band | Mean predicted against actual fraud rate in 9 score bands, validation and test (`figures/calibration.png`) | Close to the diagonal | ✅ Pass: close throughout; slightly cautious in the 0.1 to 0.7 bands |
+| TC-27 | Daily volumes are set without seeing the test months | Thresholds computed on validation, applied to test (`src/decisioning.py`) | Test volumes near, not exactly at, targets | ✅ Pass: analyst volumes on test differ from target, as expected out of sample |
+| TC-28 | Every test payment gets exactly one valid route | `scoring.decisions` primary key on `trans_num`, CHECK on route | 555,719 rows, all valid | ✅ Pass |
+| TC-29 | The business case holds under each assumption | Sensitivity: each assumption moved down and up | Saving stays positive | ✅ Pass: lowest $85k a year (loss rate 50%), base $155k |
+
 ## Findings from testing
 
 - **91 of the 999 cards contain nothing but fraud.** They average 10 transactions over 1.7 days, and they are exactly the 91 cards that appear in only one of the two files. That's 904 transactions, about 9% of all fraud. These cards have no genuine history, so "amount vs average" is measured against earlier fraud, and a model could learn "new card means fraud". Real fraud on newly compromised or newly opened cards does exist, so this is plausible, but it needs watching in SHAP and goes in the decision log.
