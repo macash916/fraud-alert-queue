@@ -91,8 +91,22 @@ picked = st.dataframe(
         "Main reason": st.column_config.TextColumn(width="large"),
     },
 )
+# The row the analyst ticked refers to the table as it was drawn on their screen, which can differ from
+# the queue just re-read if someone else has worked an alert since. So the IDs shown last time are kept,
+# and the chosen alert is identified by its transaction ID, never by its row position.
+shown_key = f"shown_ids_{route}"
 rows = picked.selection.rows
-alert = queue.iloc[rows[0] if rows else 0]
+chosen = None
+if rows and shown_key in st.session_state and rows[0] < len(st.session_state[shown_key]):
+    chosen = st.session_state[shown_key][rows[0]]
+st.session_state[shown_key] = list(queue["trans_num"])
+
+if chosen is not None and chosen in set(queue["trans_num"]):
+    alert = queue.set_index("trans_num", drop=False).loc[chosen]
+else:
+    if chosen is not None:
+        st.warning("The alert you selected has just been worked by someone else. Showing the top alert instead.")
+    alert = queue.iloc[0]
 
 st.subheader(f"Step 3 · Understand why: card {alert['card_ref']}, {money(alert['amount_usd'])}")
 st.write(f"**{alert['merchant']}**, {alert['category'].replace('_', ' ')} · "
@@ -142,31 +156,47 @@ with right:
 
 st.subheader("Step 4 · Decide")
 analyst = st.session_state.get("analyst", "").strip()
-note = st.text_area("Note (optional)", key=f"note_{alert['trans_num']}", height=80,
-                    placeholder="e.g. Customer confirmed card lost on Friday")
+st.text_area("Note (optional)", key=f"note_{alert['trans_num']}", height=80,
+             placeholder="e.g. Customer confirmed card lost on Friday")
+
+
+def decide(trans_num: str, decision: str, label: str) -> None:
+    """Record a decision on the alert that was on screen when the button was drawn.
+
+    The transaction ID travels with the button, so a click can never land on a different alert,
+    even if the queue changed in the meantime. If someone else has already worked this alert,
+    nothing is recorded and the analyst is told.
+    """
+    who = st.session_state.get("analyst", "").strip()
+    note = st.session_state.get(f"note_{trans_num}", "")
+    if db.record_decision(trans_num, decision, note, who):
+        outcome = "confirmed fraud" if decision == "confirmed_fraud" else "not fraud"
+        st.session_state["flash"] = f"Recorded: {outcome} on {label}."
+    else:
+        st.session_state["flash"] = f"Not recorded: {label} had already been worked by someone else."
+    # A new table key clears the selection, so the case panel goes back to the top alert.
+    st.session_state["decisions_made"] = st.session_state.get("decisions_made", 0) + 1
+
+
+label = f"card {alert['card_ref']}, {money(alert['amount_usd'])}"
 confirm, genuine, _ = st.columns([1, 1, 2])
-clicked = None
-if confirm.button("Confirm fraud", type="primary", width="stretch", disabled=not analyst):
-    clicked = "confirmed_fraud"
-if genuine.button("Not fraud", width="stretch", disabled=not analyst):
-    clicked = "not_fraud"
+confirm.button("Confirm fraud", type="primary", width="stretch", disabled=not analyst,
+               on_click=decide, args=(alert["trans_num"], "confirmed_fraud", label))
+genuine.button("Not fraud", width="stretch", disabled=not analyst,
+               on_click=decide, args=(alert["trans_num"], "not_fraud", label))
 st.caption("Enter your name in the sidebar to record decisions." if not analyst else
            "Your name, the time, the score you saw and the model version are logged with the decision for audit.")
-
-if clicked:
-    if db.record_decision(alert["trans_num"], clicked, note, analyst):
-        outcome = "confirmed fraud" if clicked == "confirmed_fraud" else "not fraud"
-        st.session_state["flash"] = f"Recorded: {outcome} on card {alert['card_ref']}, {money(alert['amount_usd'])}."
-    else:
-        st.session_state["flash"] = "Someone else has already worked this alert."
-    # A new table key clears the selection, so the case panel goes back to the top alert
-    # rather than silently showing whichever alert has moved into the selected row.
-    st.session_state["decisions_made"] = st.session_state.get("decisions_made", 0) + 1
-    st.rerun()
 
 with st.expander("Recently worked"):
     recent = db.recent_decisions()
     if recent.empty:
         st.write("No decisions recorded yet.")
     else:
-        st.dataframe(recent, hide_index=True, width="stretch")
+        recent = recent.rename(columns={
+            "decided_at": "When", "decided_by": "Analyst", "card_ref": "Card", "merchant": "Merchant",
+            "amount_usd": "Amount", "route": "Route", "analyst_decision": "Decision", "analyst_note": "Note"})
+        recent["Route"] = recent["Route"].map(lambda r: ROUTES[r][0])
+        recent["Decision"] = recent["Decision"].map({"confirmed_fraud": "Confirmed fraud", "not_fraud": "Not fraud"})
+        st.dataframe(recent, hide_index=True, width="stretch", column_config={
+            "When": st.column_config.DatetimeColumn(format="D MMM YYYY, HH:mm"),
+            "Amount": st.column_config.NumberColumn(format="$%.2f")})

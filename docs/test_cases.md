@@ -137,8 +137,15 @@ Run with `pytest` (see the README). The SQL tests build the dbt project on an in
 | TC-63 | The queue reads as a guided flow | Steps 1 to 4 (route, alert, why, decide); score breakdown as a "towards fraud / towards genuine" bar chart | Each step labelled; every factor name visible | ✅ Pass after widening the chart labels |
 | TC-64 | Decisions still write back after the redesign | Same write-back code and guards as TC-39 to TC-42; unit tests re-run | Unchanged behaviour | ✅ Pass (45 of 45 tests); re-exercised when recording the demo |
 
+## UAT dry run and BA pack
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-65 | A decision always lands on the alert the analyst was looking at | Two tabs, two analysts on the same alert; A confirms, then B clicks Not fraud on the out-of-date screen (UAT-10) | B refused; nothing recorded on any other alert | ✅ Pass after a fix (see findings); first run recorded B's click against a different $6,852.36 alert |
+
 ## Findings from testing
 
+- **High-severity defect found in the UAT dry run (fixed).** If another analyst worked the queue between a page being drawn and a button being clicked, the decision was applied to whichever alert was then in that position: in the test, a "Not fraud" meant for one alert was recorded against a different $6,852.36 payment. Unit tests couldn't see it, because each function was correct on its own; it only showed up with two people using the queue at once. Decisions are now bound to the transaction ID on screen, and selections are resolved by ID. Retested: pass (UAT-10, TC-65).
 - **Reason wording bug, found while writing TC-54 (fixed).** The card-history reason always said "Limited card history", even for a card with 2,521 earlier payments; 78 alerts carried it. It now says "Limited card history" only below 50 earlier payments and states the count as a plain fact above that. The time-of-day reason got the same guard (no live alert was affected). Alerts were regenerated; no analyst decisions existed to protect.
 - **A 50% rise in every amount is amber, not red (TC-58).** Card amounts are so widely spread that a 50% shift scores PSI 0.16; doubling scores 0.45. The first version of the test expected red and was wrong, not the monitor. Worth knowing when setting alarm levels: PSI on amounts is slow to react to moderate inflation.
 - **91 of the 999 cards contain nothing but fraud.** They average 10 transactions over 1.7 days, and they are exactly the 91 cards that appear in only one of the two files. That's 904 transactions, about 9% of all fraud. These cards have no genuine history, so "amount vs average" is measured against earlier fraud, and a model could learn "new card means fraud". Real fraud on newly compromised or newly opened cards does exist, so this is plausible, but it needs watching in SHAP and goes in the decision log.

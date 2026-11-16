@@ -7,8 +7,10 @@ models:
       that transaction. Read by training, scoring and the alert queue.
     columns:
       - name: trans_num
+        description: "Unique transaction ID."
         data_tests: [unique, not_null]
       - name: card_token
+        description: "Card token from staging (no card number)."
         data_tests: [not_null]
       - name: txn_count_1h
         description: Card's transactions in the hour before this one.
@@ -25,6 +27,7 @@ models:
       - name: amt_vs_avg
         description: This amount divided by the card's average over all earlier transactions. Null on a card's first transaction.
       - name: distance_km
+        description: "Distance from the customer's home to the merchant, in km."
         data_tests: [not_null]
       - name: is_new_merchant
         description: 1 if this card has not been used at this merchant before.
@@ -52,11 +55,26 @@ models:
       - name: spend_24h_vs_daily_avg
         description: (Previous 24h spend + this amount) divided by the card's average daily spend so far.
       - name: is_fraud
+        description: "Label. Training target only, never a feature."
         data_tests:
           - accepted_values:
               arguments:
                 values: [0, 1]
                 quote: false
+      - name: trans_ts
+        description: "Date and time of the payment."
+      - name: merchant
+        description: "Merchant name; used for the new-merchant feature and shown to analysts."
+      - name: source_file
+        description: "Source file, used to split training and test months."
+      - name: amt
+        description: "Payment amount in US dollars. A model input."
+      - name: category
+        description: "Merchant category. A model input (one-hot encoded)."
+      - name: hour_of_day
+        description: "Hour of the payment, 0 to 23. A model input."
+      - name: prior_avg_amt
+        description: "Card's average amount over all earlier payments (helper for amt_vs_avg; not a model input)."
 
   - name: fct_rules_baseline
     description: >
@@ -64,13 +82,52 @@ models:
       payment to analyst review, in-app step-up or approve (stronger treatment wins).
     columns:
       - name: trans_num
+        description: "Unique transaction ID."
         data_tests: [unique, not_null]
       - name: rules_route
+        description: "Treatment the rules give the payment: analyst_review, step_up or approve."
         data_tests:
           - not_null
           - accepted_values:
               arguments:
                 values: ["analyst_review", "step_up", "approve"]
+      - name: trans_ts
+        description: "Date and time of the payment."
+      - name: card_token
+        description: "Card token from staging."
+      - name: source_file
+        description: "Source file (training or test months)."
+      - name: amt
+        description: "Payment amount in US dollars."
+      - name: is_fraud
+        description: "Label, for measuring the rules only."
+      - name: rule_a2_unusual_amount
+        description: "A2 fired: amount at least 10x the card's earlier average."
+      - name: rule_b2_night_high_value
+        description: "B2 fired: between 22:00 and 04:00 and at least $500."
+      - name: rule_d1_new_merchant_high_value
+        description: "D1 fired: first payment at this merchant and at least $500."
+      - name: rules_fired
+        description: "Plain-English list of the rules that fired, for the analyst and the audit trail."
 
   - name: rpt_rules_baseline_performance
     description: Rules baseline volumes, hit rate, recall and fraud value caught, by period and route.
+    columns:
+      - name: period
+        description: "Training or test months."
+      - name: rules_route
+        description: "Treatment given by the rules."
+      - name: payments
+        description: "Payments on this route."
+      - name: per_day
+        description: "Payments a day on this route."
+      - name: frauds
+        description: "Fraud payments on this route."
+      - name: precision_pct
+        description: "Share of routed payments that were fraud (hit rate)."
+      - name: recall_pct
+        description: "Share of all fraud in the period that this route caught."
+      - name: fraud_value_usd
+        description: "Fraud dollars on this route."
+      - name: value_caught_pct
+        description: "Share of all fraud dollars in the period that this route caught."

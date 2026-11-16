@@ -1,0 +1,21 @@
+flowchart TB
+    subgraph C["Customer"]
+        direction LR
+        C1([Pays by card]) ~~~ C5[Payment declined at the till] --> C6["Phones the bank to release<br/>the charge (P3)"] ~~~ C9([Retries the payment])
+    end
+    subgraph R["Payment system and rules engine"]
+        direction LR
+        R1{"Any fixed rule fires?"} -- No --> R2["Approve (P2)"]
+        R1 -- Yes --> R3["Decline and raise an alert;<br/>reason = rule name only (P5)"]
+    end
+    subgraph A["Fraud operations analyst"]
+        direction LR
+        A1["Alert joins the queue in<br/>arrival or rule order (P4)"] --> A2[Analyst reaches it<br/>when the queue allows] --> A3["Contacts the customer (P1)"] --> A4{Customer confirms<br/>the payment?}
+        A4 -- Yes, genuine --> A5[Release the block]
+        A4 -- No, fraud --> A6[Block and reissue the card]
+    end
+    C1 --> R1
+    R3 --> C5
+    R3 --> A1
+    C6 --> A4
+    A5 --> C9

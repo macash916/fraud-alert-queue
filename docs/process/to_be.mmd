@@ -1,0 +1,31 @@
+flowchart TB
+    subgraph C["Customer"]
+        direction LR
+        C1([Pays by card]) ~~~ C2["Confirms in the banking app<br/>instead of phoning (G2)"] --> C3{Response}
+    end
+    subgraph M["Scoring and routing"]
+        direction LR
+        M1["Model scores the payment: probability,<br/>expected loss, three reasons (G3)"] --> M2{"Cheapest safe action<br/>within analyst capacity"}
+        M2 -- Low risk --> M3[Approve]
+        M2 -- Near-certain fraud --> M4[Decline and block at once]
+    end
+    subgraph A["Fraud operations analyst"]
+        direction LR
+        A1["Queue ranked by<br/>expected loss (G1)"] --> A2[Reads the reasons and<br/>the card's other alerts] --> A3{Decision}
+        A3 -- Fraud --> A4["Confirm: card blocked within<br/>the hour, stops follow-on fraud"]
+        A3 -- Genuine --> A5[Release or reinstate]
+    end
+    subgraph G["Audit, MI and model risk"]
+        direction LR
+        G1[("Decision log: who, when,<br/>score, model version")] --> G2[MI: hit rate, value saved,<br/>false positives] ~~~ G3["Monthly monitoring: drift,<br/>outcomes, fairness (G4)"] --> G4[Model owner and model risk:<br/>retrain or roll back]
+    end
+    C1 --> M1
+    M2 -- Medium risk --> C2
+    C3 -- "Yes, it was me" --> M3
+    C3 -- No response --> A1
+    C3 -- Not me --> M4
+    M2 -- "High risk, worth a person" --> A1
+    M4 -- Reviewed afterwards --> A1
+    A4 --> G1
+    A5 --> G1
+    G1 --> G3

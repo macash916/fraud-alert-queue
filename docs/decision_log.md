@@ -1,12 +1,37 @@
-# Decisions made overnight for Amrit's review
+# Decision log
 
-On 16 Nov 2026 (00:45) Amrit chose **option A**: Claude continues overnight using the recommended option wherever a design question comes up, records every such choice here, and commits each finished section locally (no push). Amrit approves or reverses each item in the morning; anything reversed gets reworked.
+Every material design decision, the options considered, the reason, and who made it. Kept for model risk (PRA SS1/23 principle 2), audit and anyone picking the project up later.
 
-**Status (16 Nov 2026, morning): O1 to O28 approved by Amrit.**
+**Who decided:** "Amrit" means Amrit Sharma decided directly. "Proposed by Claude, approved by Amrit" means the option was proposed by Claude (AI assistant used to build the project) and approved by Amrit, either one by one or as a reviewed batch, as noted in each section.
 
-Each entry gives the question, the option chosen, the alternatives, and why.
+## 1. Scope, approach and early design (15 and 16 Nov 2026)
 
-| # | Section | Question | Chosen (recommended) | Alternatives | Why |
+| # | Date | Decision | Alternatives considered | Why | Decided by |
+|---|---|---|---|---|---|
+| E1 | 15 Nov | PostgreSQL 16 in Docker as the system of record | Local PostgreSQL install on the Mac | Same database on any machine; `docker compose up` on a clean machine | Amrit |
+| E2 | 15 Nov | Scope additions 1 to 9 for London bank BA/DA roles; real-time API, replay, backtesting, point-of-compromise analysis and SLA timers out of scope | A broader build | Depth on what UK banks assess (cost, fairness, model risk, BA artefacts) over breadth | Amrit |
+| E3 | 15 Nov | Three-way routing with in-app step-up (customer confirms in the banking app), replacing "call the bank to release the charge"; genuine confirm 95%, fraudster pass 10%; separate analyst and step-up budgets | Analyst review or approve only | Amrit's design from card-fraud operations; links to UK Strong Customer Authentication; step-ups cost customer friction, so they get their own budget | Amrit |
+| E4 | 15 Nov | Rules baseline: A2 (amount at least 10x card average) and B2 (22:00 to 04:00 and at least $500) to analyst review; D1 (new merchant and at least $500) to step-up; analyst wins; rules in dbt; designed on training months only | Other rule sets; rules in Python | An honest, analyst-style "today" to beat, built like a bank rules engine | Amrit |
+| E5 | 15 Nov | Models compared with the rules at the same alert volume; money shown in US dollars | Compare at a default 0.5 threshold; convert to GBP | Same workload is the only fair comparison; the data is US-simulated | Amrit |
+| E6 | 15 Nov | dbt layer with the essentials only: staging (tokenised, minimised) and features as tables, with tests and lineage | Views; a larger dbt project | Tables run window functions once; essentials keep it reviewable | Amrit |
+| E7 | 15 Nov | Card tokens by keyed HMAC-SHA256, key in `.env` | Plain SHA-256 hash | Card numbers are short enough that an unkeyed hash can be brute-forced | Proposed by Claude, approved by Amrit |
+| E8 | 15 Nov | Modelling levers A to D: confirm then block (1-hour delay); five extra features; four routes; expected-loss ranking | Transaction-level outcome only; fixed-rule routing | Evidence from the rules baseline: 67% of missed fraud came after the card was already alerted, and 92% of missed fraud dollars were $100 to $499 | Amrit |
+| E9 | 15 Nov | Feature definitions: category norm across all cards; small payment under $20; 4-hour time-of-day bands | Customer-specific category norm; other cut-offs | Simple and leak-free; the customer-specific norm is now the recommended fairness challenger | Amrit |
+| E10 | 15 Nov | Project moved out of the iCloud-synced Desktop to `~/Projects` | Keep it there | iCloud offloading stalled every Python and dbt start-up | Amrit |
+| E11 | 16 Nov | Scope frozen; thin end-to-end slice, then deepen; README tells a two-minute story | Keep adding levers | Finish properly rather than wide | Amrit |
+| E12 | 16 Nov | Validation: fit on 2019, compare on 1 Jan to 21 Jun 2020, retrain the chosen settings on all training months, use the test months once | Random split; repeated test use | Time split mirrors live use; one look at the test months keeps it honest | Amrit |
+| E13 | 16 Nov | No reweighting of the fraud class; a weighted challenger only if calibration or ranking turned out poor | Class weights from the start | Honest probabilities are needed for expected loss; not needed in the end | Amrit |
+| E14 | 16 Nov | Missing history: XGBoost native handling; logistic regression gets neutral fills plus a has-history flag | Fill zeros everywhere | Every payment stays scoreable without inventing history | Amrit |
+| E15 | 16 Nov | Keep all 14 features for the first run; drop the two weak ones only if SHAP confirms they add nothing | Drop them up front | Let the evidence decide (see O17) | Amrit |
+| E16 | 16 Nov | One-hot merchant category; a small logged search (20 XGBoost and 6 logistic regression settings); choose by validation PR-AUC and report business metrics | Large automated search | Every run is visible and explainable to model risk | Amrit |
+| E17 | 16 Nov | MLflow upgraded from 2.17.2 to 2.22.1 (database migrated) | Pin protobuf below 6 | 2.17.2 conflicted with dbt's protobuf requirement | Amrit |
+| E18 | 16 Nov | MLflow on host port 5001 | Port 5000 | macOS uses 5000 for AirPlay | Proposed by Claude, approved by Amrit |
+| E19 | 16 Nov | One push at the very end, no versions; a detailed report after every section | Push as you go | Amrit's working preference | Amrit |
+| E20 | 16 Nov | Tableau dashboards parked until further notice | Build them now | Not the priority; Streamlit covers the queue and MI | Amrit |
+
+## 2. Overnight build, sections 7c to 11 (proposed by Claude overnight, approved by Amrit on 16 Nov 2026)
+
+| # | Section | Question | Chosen | Alternatives | Why |
 |---|---|---|---|---|---|
 | O1 | 7c Final model | Which settings become the production model? | XGBoost run 10 settings (best validation PR-AUC 0.983), retrained on all training months | Any of the other 19 settings (all PR-AUC 0.957 to 0.983) | Selection rule agreed earlier: best PR-AUC on validation |
 | O2 | 7c Final model | How is the model versioned? | MLflow model registry `fraud-xgboost`, alias `champion` (version 1) | Plain run artefact only | Registry and aliases are how model risk tracks which version is live |
@@ -37,9 +62,7 @@ Each entry gives the question, the option chosen, the alternatives, and why.
 | O27 | 11 App | Analyst identity | A name field in the sidebar, required before deciding. No login | Authentication | Login is out of scope for a portfolio build; the model card will list it as a production gap |
 | O28 | 11 App | Docker | Separate slim image with only the app's 4 packages; `.dockerignore` admits only `app/*.py`, its requirements and the Streamlit config; runs as a non-root user; port bound to 127.0.0.1 | One image with the full modelling stack | Smaller image; data and `.env` can never be copied into it |
 
-## Remaining build, S12 to S17 (approved by Amrit, 16 Nov 2026)
-
-Proposed by Claude, approved by Amrit as one blanket go-ahead with the changes noted. These move into `decision_log.md` in S14.
+## 3. Remaining build, S12 to S17 (proposed by Claude, approved by Amrit as one batch on 16 Nov 2026, with his changes)
 
 | # | Section | Decision | Status |
 |---|---|---|---|
@@ -92,3 +115,18 @@ Proposed by Claude, approved by Amrit as one blanket go-ahead with the changes n
 | D47 | Housekeeping | Old Desktop copy deleted by Amrit, or on his explicit word | Approved |
 | D48 | Housekeeping | Update `CLAUDE.md` layout and definition of done at the end | Approved |
 | D49 | Housekeeping | Detailed report per section, then continue | Approved |
+
+## 4. Decisions made while building S12 to S14 (proposed by Claude under the batch approval; for Amrit's review)
+
+| # | Section | Decision | Alternatives | Why |
+|---|---|---|---|---|
+| S1 | S12 Monitoring | Score-drift baseline: the champion's scores on its own training months | The first test month | The development sample is the usual SS1/23 reference; it makes the alarm slightly early, the safe direction |
+| S2 | S12 Monitoring | Any amber or red feature is also compared with the same calendar month a year earlier | Investigate by hand | The first run showed December reds; one comparison proved them seasonal |
+| S3 | S12 Monitoring | "Length of card history" (red every month by construction) raised as a feature-design finding with a capped-feature challenger; no model change | Retrain now | Score and outcomes are stable; scope is frozen |
+| S4 | S13 Tests | Fix the card-history and time-of-day reason wording (78 alerts said "Limited card history" for long histories) and regenerate the alerts | Leave as is | A misleading reason is a Consumer Duty and audit problem; no analyst decisions existed to protect |
+| S5 | S13 Tests | Drift alarm test: +20% green, +50% amber, doubling red | Expect red at +50% | Measured PSI is 0.03, 0.16 and 0.45; the first expectation was wrong, not the monitor |
+| S6 | S13 Tests | MI calculations moved to `app/metrics.py` | Test through the page | Testable without starting the app |
+| S7 | App | Overview landing page; queue as four numbered steps; score breakdown as a towards-fraud / towards-genuine bar chart; plain light theme | Keep the analyst-only layout | Amrit's instruction (replacing D30): basic, structured, followable by hiring managers, banking professionals and BAs |
+| S8 | S14 | Results for rules, logistic regression and XGBoost at the same workload, including total cost with card blocks (`src/results_table.py`) | Cost only for the XGBoost policies | The definition of done asks for cost at the chosen threshold for all three |
+| S9 | S14 | Data dictionary and lineage generated from dbt's manifest; every column documented in the dbt YAML | Hand-written dictionary; dbt docs screenshot | Can't drift from the models |
+| S10 | S14 | Process maps as Mermaid swimlanes with pain (P) and gain (G) markers explained in `process_maps.md` | Draw.io by hand | Versioned source; renders on GitHub |

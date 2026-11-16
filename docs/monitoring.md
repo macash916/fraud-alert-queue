@@ -10,7 +10,7 @@ A fraud model is trained on the past. Customers' spending changes, fraudsters ch
 
 | Check | Question it answers | Measure | Green / amber / red |
 |---|---|---|---|
-| Input drift | Do this month's payments look like the ones the model learned from? | Population Stability Index (PSI) for each of the 14 features and the merchant-category mix, against the training months | below 0.10 / 0.10 to 0.25 / above 0.25 |
+| Input drift | Do this month's payments look like the ones the model learned from? | Population Stability Index (PSI) for the payment amount, each of the 14 engineered features and the merchant-category mix, against the training months | below 0.10 / 0.10 to 0.25 / above 0.25 |
 | Seasonal comparison | Is a flagged feature just the time of year? | PSI against the same calendar month a year earlier, for any amber or red feature | below 0.10 means seasonal |
 | Score drift | Is the model scoring payments differently? | PSI of the fraud probability against the model's scores on its training months | as input drift |
 | Outcomes | Is the queue still stopping fraud? | Share of fraud value stopped by the routes; alerts a day by route; analyst hit rate; genuine customers interrupted per 10,000 | Fraud value: amber more than 2 points below the test-period baseline, red more than 5 |
