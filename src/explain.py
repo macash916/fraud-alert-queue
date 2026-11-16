@@ -161,6 +161,21 @@ CREATE TABLE IF NOT EXISTS app.alerts (
     decided_at         TIMESTAMP,
     created_at         TIMESTAMP NOT NULL DEFAULT now()
 );
+
+-- Append-only audit trail: one row per analyst decision, never updated or deleted.
+-- app.alerts holds the current state; this table holds the history an auditor asks for.
+CREATE TABLE IF NOT EXISTS app.alert_decision_log (
+    decision_id        BIGSERIAL PRIMARY KEY,
+    trans_num          TEXT NOT NULL REFERENCES app.alerts (trans_num),
+    analyst_decision   TEXT NOT NULL CHECK (analyst_decision IN ('confirmed_fraud', 'not_fraud')),
+    analyst_note       TEXT,
+    decided_by         TEXT NOT NULL,
+    decided_at         TIMESTAMP NOT NULL DEFAULT now(),
+    model_version      TEXT NOT NULL,
+    fraud_probability  DOUBLE PRECISION NOT NULL,   -- the score the analyst saw
+    route              TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS alerts_open_queue ON app.alerts (status, route, expected_loss_usd DESC);
 """
 
 UPSERT = """

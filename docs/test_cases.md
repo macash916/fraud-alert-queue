@@ -87,6 +87,20 @@ XGBoost scored ROC-AUC 0.9997 and PR-AUC 0.983 on the validation months (Jan to 
 | TC-35 | Age bands cover every payment | dbt accepted-values test on `age_band` | Pass | ✅ Pass after adding "Under 18" (13 cards aged 13 to 17 found) |
 | TC-36 | No customer group is materially worse off under the model | `src/fairness.py`: interruptions and detection by age band and gender with 95% intervals | No flags | ✅ Pass: no flags; one watch item (female/male interruption gap, 1.09x overall) |
 
+## Analyst app and MI
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-37 | Queue ranks open alerts by expected loss within each route | Open each route tab; compare with `ORDER BY expected_loss_usd DESC` in SQL | Same order | ✅ Pass |
+| TC-38 | Every alert shows three plain-English reasons and its route | Select alerts on each route | Three reasons, route description shown | ✅ Pass |
+| TC-39 | Confirm fraud writes back | Enter a name, add a note, click Confirm fraud | `app.alerts` closed with decision, note, name, time; one row in `app.alert_decision_log` with the score and model version seen; alert leaves the queue | ✅ Pass |
+| TC-40 | Not fraud writes back on a selected row | Select row 3 on another route, click Not fraud | Same as TC-39 for that alert; selection returns to the top alert | ✅ Pass (selection reset added after the first run showed the next alert inheriting the selection) |
+| TC-41 | An alert can't be worked twice | Call the decision function again on a closed alert | Rejected; no second log row | ✅ Pass |
+| TC-42 | Decisions need an analyst name | Leave the name empty | Buttons disabled, prompt shown | ✅ Pass |
+| TC-43 | MI figures match the recorded decisions | Two test decisions (1 fraud $5,920.50, 1 genuine) | Worked 2, hit rate 50%, value saved $5,921, false positive rate 50% | ✅ Pass. Test decisions then removed so MI starts clean |
+| TC-44 | `docker compose up` starts the app with the database | `docker compose up -d --build app` | `fraud_app` healthy on 127.0.0.1:8501, queue loads | ✅ Pass |
+| TC-45 | No data or secrets in the app image | List `/srv` inside the container | Only the app's Python files, its requirements and the Streamlit config | ✅ Pass |
+
 ## Findings from testing
 
 - **91 of the 999 cards contain nothing but fraud.** They average 10 transactions over 1.7 days, and they are exactly the 91 cards that appear in only one of the two files. That's 904 transactions, about 9% of all fraud. These cards have no genuine history, so "amount vs average" is measured against earlier fraud, and a model could learn "new card means fraud". Real fraud on newly compromised or newly opened cards does exist, so this is plausible, but it needs watching in SHAP and goes in the decision log.

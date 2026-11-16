@@ -1,0 +1,9 @@
+# Streamlit settings for the analyst app (no secrets here: those live in .env).
+[client]
+toolbarMode = "minimal"   # hide developer menus such as Deploy
+
+[browser]
+gatherUsageStats = false  # no usage telemetry sent to Streamlit
+
+[server]
+headless = true

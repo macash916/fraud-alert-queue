@@ -1,0 +1,5 @@
+# Only the analyst app goes into the image. Never data, secrets or local environments.
+*
+!app/*.py
+!app/requirements.txt
+!.streamlit/config.toml

@@ -49,6 +49,25 @@ services:
       timeout: 5s
       retries: 10
 
+  # The analyst app: alert queue and MI page, reading and writing the app schema.
+  app:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    container_name: fraud_app
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: postgres       # the service name above, on Compose's internal network
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "127.0.0.1:${APP_PORT:-8501}:8501"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   pgdata:
   mlflow_data:

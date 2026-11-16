@@ -1,0 +1,5 @@
+# The analyst app's own, smaller set of packages (the Docker image installs only these).
+streamlit==1.67.0
+pandas==2.2.3
+psycopg[binary]==3.2.3
+python-dotenv==1.2.4
