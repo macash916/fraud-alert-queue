@@ -70,6 +70,15 @@ XGBoost scored ROC-AUC 0.9997 and PR-AUC 0.983 on the validation months (Jan to 
 | TC-28 | Every test payment gets exactly one valid route | `scoring.decisions` primary key on `trans_num`, CHECK on route | 555,719 rows, all valid | ✅ Pass |
 | TC-29 | The business case holds under each assumption | Sensitivity: each assumption moved down and up | Saving stays positive | ✅ Pass: lowest $85k a year (loss rate 50%), base $155k |
 
+## Explainability and alerts
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-30 | SHAP values are exact for the model | Compare `shap.TreeExplainer` with XGBoost's own TreeSHAP on a test model | Identical | ✅ Pass |
+| TC-31 | Every alert has three plain-English reasons | Count alerts with an empty reason | 0 | ✅ Pass: 0 of 5,245 |
+| TC-32 | Refreshing scores never overwrites an analyst's decision | Record a decision on one alert, rerun `src/explain.py`, check it, then remove it | Decision unchanged | ✅ Pass: still closed / confirmed_fraud |
+| TC-33 | Reasons say which way a payment is unusual | Review all reason patterns; reword ratios below 1, small amounts and long gaps | No reason reads as a non-reason | ✅ Pass after rewording (126 low ratios, 483 small amounts, 586 long gaps) |
+
 ## Findings from testing
 
 - **91 of the 999 cards contain nothing but fraud.** They average 10 transactions over 1.7 days, and they are exactly the 91 cards that appear in only one of the two files. That's 904 transactions, about 9% of all fraud. These cards have no genuine history, so "amount vs average" is measured against earlier fraud, and a model could learn "new card means fraud". Real fraud on newly compromised or newly opened cards does exist, so this is plausible, but it needs watching in SHAP and goes in the decision log.
