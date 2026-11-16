@@ -53,6 +53,14 @@ XGBoost scored ROC-AUC 0.9997 and PR-AUC 0.983 on the validation months (Jan to 
 | TC-21 | The result doesn't rest on the 91 fraud-only cards | Score validation without those cards | Little change | ✅ Pass: PR-AUC 0.981 against 0.983 |
 | TC-22 | No single feature dominates suspiciously | XGBoost share of total gain | Importance spread across plausible features | ✅ Pass: top is spend vs daily norm (31%), then hour (16%), grocery in-store (12%); card history count only 2% |
 
+## Final evaluation (test months, used once)
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-23 | The model holds up on months it has never seen | Retrain on all training months, score 21 Jun to 31 Dec 2020 once (`src/final_model.py`) | Performance close to validation | ✅ Pass: PR-AUC 0.974 (validation 0.983); 99.75% of fraud value caught at the rules' volume against 80.6% for the rules |
+| TC-24 | Probabilities stay calibrated when the fraud rate shifts | Mean predicted fraud rate against actual on the test months | Close | ✅ Pass: 0.380% predicted, 0.386% actual |
+| TC-25 | Scores are stored for every scored payment | Row count of `scoring.model_scores` | 371,825 validation + 2 × 555,719 test = 1,483,263 | ✅ Pass |
+
 ## Findings from testing
 
 - **91 of the 999 cards contain nothing but fraud.** They average 10 transactions over 1.7 days, and they are exactly the 91 cards that appear in only one of the two files. That's 904 transactions, about 9% of all fraud. These cards have no genuine history, so "amount vs average" is measured against earlier fraud, and a model could learn "new card means fraud". Real fraud on newly compromised or newly opened cards does exist, so this is plausible, but it needs watching in SHAP and goes in the decision log.

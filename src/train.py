@@ -75,14 +75,19 @@ LR_STRENGTHS = [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]  # C: smaller = stronger reg
 
 # ---------------------------------------------------------------- data
 
-def load_training_file() -> pd.DataFrame:
-    """Features, label and the rules' route for every payment in the TRAINING file only."""
+def load_training_file(source_file: str = "fraudTrain.csv") -> pd.DataFrame:
+    """Features, label and the rules' route for every payment in one source file.
+
+    train.py only ever reads the training file; final_model.py reads the test file once.
+    """
+    assert source_file in ("fraudTrain.csv", "fraudTest.csv")
     sql = f"""
-        SELECT f.trans_num, f.trans_ts, f.category, {', '.join('f.' + c for c in NUMERIC_FEATURES)},
+        SELECT f.trans_num, f.trans_ts, f.card_token, f.category,
+               {', '.join('f.' + c for c in NUMERIC_FEATURES)},
                f.is_fraud, r.rules_route
         FROM analytics.fct_transaction_features f
         JOIN analytics.fct_rules_baseline r USING (trans_num)
-        WHERE f.source_file = 'fraudTrain.csv'
+        WHERE f.source_file = '{source_file}'
     """
     with connect() as conn, conn.cursor() as cur:
         cur.execute(sql)
