@@ -112,7 +112,7 @@ Every material design decision, the options considered, the reason, and who made
 | D44 | S17 Push | Amrit runs `git push` himself after the pre-push report | Approved |
 | D45 | S17 Push | One follow-up fix push allowed if CI fails only on GitHub | Approved |
 | D46 | Parked | Tableau `rpt_*` tables | **Parked until further notice** |
-| D47 | Housekeeping | Old Desktop copy deleted by Amrit, or on his explicit word | Approved |
+| D47 | Housekeeping | Old Desktop copy deleted by Amrit, or on his explicit word | **Parked by Amrit:** kept until he says otherwise |
 | D48 | Housekeeping | Update `CLAUDE.md` layout and definition of done at the end | Approved |
 | D49 | Housekeeping | Detailed report per section, then continue | Approved |
 
