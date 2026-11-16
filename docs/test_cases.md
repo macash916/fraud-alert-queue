@@ -143,6 +143,13 @@ Run with `pytest` (see the README). The SQL tests build the dbt project on an in
 |---|---|---|---|---|
 | TC-65 | A decision always lands on the alert the analyst was looking at | Two tabs, two analysts on the same alert; A confirms, then B clicks Not fraud on the out-of-date screen (UAT-10) | B refused; nothing recorded on any other alert | ✅ Pass after a fix (see findings); first run recorded B's click against a different $6,852.36 alert |
 
+## README and demo
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-66 | The README tells the story with checked numbers | Every figure in the README traced to its source: `results_table.md`, `business_case.md`, `model_card.md`, `fairness_audit.md`, `process_maps.md`; every link to a document opened | Numbers match their source; no broken links | ✅ Pass |
+| TC-67 | The demo shows the real app working | `docs/process/demo.py` drives the running app (Overview, queue, reasons, Confirm fraud, MI) and writes `demo.gif` and `app_alert.png`; the demo decision is then removed | GIF and screenshot show the flow; queue back to 5,245 open alerts and an empty decision log | ✅ Pass after two fixes: the screenshot first captured only a heading (wrong crop), and amounts in the card's alert table lacked a thousands separator ("$2915.33", now "$2,915.33") |
+
 ## Findings from testing
 
 - **High-severity defect found in the UAT dry run (fixed).** If another analyst worked the queue between a page being drawn and a button being clicked, the decision was applied to whichever alert was then in that position: in the test, a "Not fraud" meant for one alert was recorded against a different $6,852.36 payment. Unit tests couldn't see it, because each function was correct on its own; it only showed up with two people using the queue at once. Decisions are now bound to the transaction ID on screen, and selections are resolved by ID. Retested: pass (UAT-10, TC-65).

@@ -29,13 +29,13 @@ Each requirement traced from the user story that needs it, to the tests that che
 | NFR-01 Card numbers only in the raw table; HMAC token downstream | US-12 | TC-09 to TC-12, TC-51 | `dbt/models/staging/stg_transactions.sql`; dbt test `assert_no_personal_data_downstream` |
 | NFR-02 No personal fields as features; age and gender restricted | US-11, US-12 | TC-09, TC-10, TC-34 | `dbt/models/restricted/fairness_attributes.sql`; `data_dictionary.md` |
 | NFR-03 No data leakage | US-10 | TC-03, TC-06, TC-08, TC-17, TC-19 to TC-22, TC-27, TC-53 | `src/leakage_checks.py`; `tests/test_sql_features.py`; MLflow `leakage-checks` |
-| NFR-04 Reproducible: fixed seed, every run logged, model versioned | US-10 | TC-25, TC-66 | MLflow; `config/decision_params.yaml` (`random_seed`); clean-machine rerun (S16) |
-| NFR-05 `docker compose up` starts everything on a clean machine | US-14 | TC-44, TC-66 | `docker-compose.yml`; `app/Dockerfile`; clean-machine test (S16) |
+| NFR-04 Reproducible: fixed seed, every run logged, model versioned | US-10 | TC-25, TC-68 | MLflow; `config/decision_params.yaml` (`random_seed`); clean-machine rerun (S16) |
+| NFR-05 `docker compose up` starts everything on a clean machine | US-14 | TC-44, TC-68 | `docker-compose.yml`; `app/Dockerfile`; clean-machine test (S16) |
 | NFR-06 Automated tests and lint in CI | US-14 | TC-60, TC-61 | `.github/workflows/ci.yml`; `tests/` |
-| NFR-07 Secrets only in `.env`, never committed | US-12 | TC-45, TC-67 | `.gitignore`; `.env.example`; `.dockerignore`; pre-push secrets scan (S17) |
+| NFR-07 Secrets only in `.env`, never committed | US-12 | TC-45, TC-69 | `.gitignore`; `.env.example`; `.dockerignore`; pre-push secrets scan (S17) |
 | NFR-08 Explanations exact and truthful | US-02 | TC-30, TC-54 | `src/explain.py`; `tests/test_reasons.py` |
-| NFR-09 A newcomer can follow the app; British English | US-15 | TC-62, TC-63, UAT-01 | `app/overview_page.py`; `docs/` |
+| NFR-09 A newcomer can follow the app; British English | US-15 | TC-62, TC-63, TC-66, TC-67, UAT-01 | `app/overview_page.py`; `README.md`; `docs/` |
 
 ## Coverage check
 
-Every story US-01 to US-15 maps to at least one requirement, and every requirement to at least one test. TC-66 (clean-machine rerun) and TC-67 (pre-push secrets scan) are completed in S16 and S17.
+Every story US-01 to US-15 maps to at least one requirement, and every requirement to at least one test. TC-68 (clean-machine rerun) and TC-69 (pre-push secrets scan) are completed in S16 and S17.

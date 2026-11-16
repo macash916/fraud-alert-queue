@@ -83,9 +83,9 @@ picked = st.dataframe(
     column_config={
         "Rank": st.column_config.NumberColumn(width="small"),
         "Time": st.column_config.DatetimeColumn(format="D MMM YYYY, HH:mm"),
-        "Amount": st.column_config.NumberColumn(format="$%.2f"),
+        "Amount": st.column_config.NumberColumn(format="dollar"),
         "Fraud probability": st.column_config.ProgressColumn(format="percent", min_value=0, max_value=1),
-        "Expected loss": st.column_config.NumberColumn(format="$%.2f",
+        "Expected loss": st.column_config.NumberColumn(format="dollar",
                                                        help="Fraud probability x amount: what the bank "
                                                             "stands to lose if this alert is fraud and missed."),
         "Main reason": st.column_config.TextColumn(width="large"),
@@ -110,7 +110,7 @@ else:
 
 st.subheader(f"Step 3 · Understand why: card {alert['card_ref']}, {money(alert['amount_usd'])}")
 st.write(f"**{alert['merchant']}**, {alert['category'].replace('_', ' ')} · "
-         f"{pd.Timestamp(alert['trans_ts']):%d %b %Y, %H:%M}")
+         f"{pd.Timestamp(alert['trans_ts']):%d %b %Y, %H:%M} · Route: **{ROUTES[route][0]}**")
 left, right = st.columns([1, 1], gap="large")
 
 with left:
@@ -130,7 +130,7 @@ with left:
                             "Merchant": history["merchant"]})
     st.dataframe(history, hide_index=True, width="stretch", height=180, column_config={
         "Time": st.column_config.DatetimeColumn(format="D MMM, HH:mm"),
-        "Amount": st.column_config.NumberColumn(format="$%.2f"),
+        "Amount": st.column_config.NumberColumn(format="dollar"),
         "Probability": st.column_config.NumberColumn(format="percent")})
 
 with right:
@@ -199,4 +199,4 @@ with st.expander("Recently worked"):
         recent["Decision"] = recent["Decision"].map({"confirmed_fraud": "Confirmed fraud", "not_fraud": "Not fraud"})
         st.dataframe(recent, hide_index=True, width="stretch", column_config={
             "When": st.column_config.DatetimeColumn(format="D MMM YYYY, HH:mm"),
-            "Amount": st.column_config.NumberColumn(format="$%.2f")})
+            "Amount": st.column_config.NumberColumn(format="dollar")})
