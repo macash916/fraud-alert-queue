@@ -19,7 +19,6 @@ import os
 import mlflow
 import mlflow.sklearn
 import mlflow.xgboost
-import numpy as np
 import pandas as pd
 from mlflow import MlflowClient
 from sklearn.linear_model import LogisticRegression

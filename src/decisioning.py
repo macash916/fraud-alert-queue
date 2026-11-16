@@ -231,7 +231,9 @@ def plot_calibration(valid_tab: pd.DataFrame, test_tab: pd.DataFrame) -> Path:
           "Mean predicted probability (score band)", "Actual fraud rate")
     ax.legend(frameon=False, labelcolor=INK_2)
     path = FIGURES / "calibration.png"
-    fig.tight_layout(); fig.savefig(path, dpi=160); plt.close(fig)
+    fig.tight_layout()
+    fig.savefig(path, dpi=160)
+    plt.close(fig)
     return path
 
 
@@ -249,7 +251,9 @@ def plot_capacity(curve: pd.DataFrame, rules_point: dict) -> Path:
     ax.set_ylim(0, 100)
     ax.legend(frameon=False, labelcolor=INK_2, loc="lower right")
     path = FIGURES / "capacity_curve.png"
-    fig.tight_layout(); fig.savefig(path, dpi=160); plt.close(fig)
+    fig.tight_layout()
+    fig.savefig(path, dpi=160)
+    plt.close(fig)
     return path
 
 
@@ -266,7 +270,9 @@ def plot_tornado(sens: pd.DataFrame, base: float) -> Path:
     ax.legend(frameon=False, labelcolor=INK_2, loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2)
     ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"\\${v / 1e3:.0f}k"))
     path = FIGURES / "sensitivity_tornado.png"
-    fig.tight_layout(); fig.savefig(path, dpi=160); plt.close(fig)
+    fig.tight_layout()
+    fig.savefig(path, dpi=160)
+    plt.close(fig)
     return path
 
 

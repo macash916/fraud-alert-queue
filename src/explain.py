@@ -23,7 +23,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import mlflow  # noqa: E402
 import mlflow.xgboost  # noqa: E402
-import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 import shap  # noqa: E402
 
@@ -104,12 +103,16 @@ def reason_text(feature: str, row: pd.Series) -> str:
         return (f"Only {v / 60:.0f} minutes since the previous payment" if v < 3600
                 else f"First payment in {v / 3600:.0f} hours, after a quiet spell on the card")
     if feature == "prior_txn_count":
-        return f"Limited card history: {v:.0f} earlier payment(s)"
+        # Only a short history is unusual in itself; a long one is stated as a plain fact.
+        return (f"Limited card history: {v:.0f} earlier payment(s)" if v < 50
+                else f"Card history of {v:,.0f} earlier payments, a pattern the model links to fraud here")
     if feature == "distance_km":
         return f"Merchant is {v:.0f} km from the customer's home"
     if feature == "hour_band_share":
-        return (f"Customer rarely pays at this time of day ({100 * v:.0f}% of past payments)"
-                if pd.notna(v) else "No history of this customer's usual payment times")
+        if pd.isna(v):
+            return "No history of this customer's usual payment times"
+        return (f"Customer rarely pays at this time of day ({100 * v:.0f}% of past payments)" if v < 0.2
+                else f"{100 * v:.0f}% of this customer's past payments were at this time of day")
     if feature == "small_txn_count_24h":
         return f"{v:.0f} small payment(s) under $20 in the previous 24 hours"
     return FEATURE_NAMES.get(feature, feature)
@@ -196,7 +199,9 @@ def plot_importance(importance: pd.Series) -> None:
     fig, ax = plt.subplots(figsize=(8, 6), facecolor=SURFACE)
     ax.barh([FEATURE_NAMES.get(f, f) for f in importance.index], importance.values, color=BLUE, height=0.6)
     style(ax, "What drives the model: mean absolute SHAP, test months", "Mean |SHAP| (log-odds)", "")
-    fig.tight_layout(); fig.savefig(FIGURES / "shap_importance.png", dpi=160); plt.close(fig)
+    fig.tight_layout()
+    fig.savefig(FIGURES / "shap_importance.png", dpi=160)
+    plt.close(fig)
 
 
 def main() -> None:

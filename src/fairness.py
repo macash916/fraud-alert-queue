@@ -104,7 +104,9 @@ def plot(tables: dict) -> None:
     style(ax, "Genuine customers interrupted, per 10,000 genuine payments (95% interval)",
           "Interruptions per 10,000 genuine payments (step-up, decline or analyst hold)", "")
     ax.legend(frameon=False, labelcolor=INK_2, loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=2)
-    fig.tight_layout(); fig.savefig(FIGURES / "fairness_interruptions.png", dpi=160); plt.close(fig)
+    fig.tight_layout()
+    fig.savefig(FIGURES / "fairness_interruptions.png", dpi=160)
+    plt.close(fig)
 
 
 def main() -> None:

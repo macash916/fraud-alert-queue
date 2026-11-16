@@ -1,0 +1,68 @@
+# Continuous integration: runs on every push and pull request to main.
+# No real data and no real secrets: the SQL tests use the invented fixture in tests/fixtures,
+# and the database password and card-token key below exist only inside this throwaway CI run.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install ruff==0.14.5
+      - run: ruff check .
+
+  tests:
+    name: Tests (unit, SQL features on PostgreSQL 16, dbt tests)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_only_password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_user"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ci_user
+      POSTGRES_PASSWORD: ci_only_password
+      POSTGRES_DB: postgres            # the maintenance database; tests create their own
+      TEST_POSTGRES_DB: fraud_ci
+      CARD_TOKEN_KEY: ci-only-key-not-a-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -v
+
+  app-image:
+    name: Build the analyst app image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f app/Dockerfile -t fraud-alert-queue-app:ci .

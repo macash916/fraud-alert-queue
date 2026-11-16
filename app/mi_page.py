@@ -9,28 +9,11 @@ import pandas as pd
 import streamlit as st
 
 import db
+from metrics import pct, summarise
 
 ROUTE_LABELS = {"analyst_review": "Analyst review", "decline": "Decline and block", "step_up": "In-app step-up"}
 DECISION_LABELS = {"confirmed_fraud": "Confirmed fraud", "not_fraud": "Not fraud"}
 ORANGE, BLUE = "#eb6834", "#2a78d6"  # project palette: fraud orange, genuine blue
-
-
-def summarise(df: pd.DataFrame) -> dict:
-    worked = len(df)
-    fraud = int((df["analyst_decision"] == "confirmed_fraud").sum())
-    genuine = worked - fraud
-    return {
-        "Alerts worked": worked,
-        "Confirmed fraud": fraud,
-        "Not fraud": genuine,
-        "Hit rate": fraud / worked if worked else None,
-        "False positive rate": genuine / worked if worked else None,
-        "Value saved": float(df.loc[df["analyst_decision"] == "confirmed_fraud", "amount_usd"].sum()),
-    }
-
-
-def pct(x) -> str:
-    return "n/a" if x is None else f"{x:.0%}"
 
 
 st.title("Management information")

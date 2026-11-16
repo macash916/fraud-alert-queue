@@ -1,0 +1,4 @@
+# Developer tools: tests and linting (CI installs these on top of requirements.txt).
+-r requirements.txt
+pytest==8.4.2
+ruff==0.14.5

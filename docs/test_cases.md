@@ -110,7 +110,28 @@ XGBoost scored ROC-AUC 0.9997 and PR-AUC 0.983 on the validation months (Jan to 
 | TC-48 | Seasonal change is told apart from real change | December's red features compared with December 2019 | Seasonal features go green against last year | ✅ Pass: five December reds all 0.000 to 0.003 against Dec 2019 |
 | TC-49 | Monitor catches a feature that drifts by design | "Length of card history" PSI | Flagged | ✅ Flagged red every month, also against the same month last year; raised as a feature-design finding |
 
+## Automated tests and CI
+
+Run with `pytest` (see the README). The SQL tests build the dbt project on an invented fixture in a separate database (`fraud_ci`), never the real one.
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-50 | Every SQL feature matches a hand calculation | `tests/test_sql_features.py`: 12 invented payments on 4 cards (same-second payments, window boundaries, first payments, birthdays), 14 features compared with values worked out by hand | All match within 0.001 | ✅ Pass: every value matched on the first run |
+| TC-51 | Rules routing, age bands and tokenisation on the fixture | Same test file | A2 fires at exactly 10x; analyst review beats step-up; age 65 on the birthday is 65+; one 64-character token per card | ✅ Pass |
+| TC-52 | dbt models and all dbt tests pass on the fixture | `dbt build` inside the test | No errors, warnings or skips | ✅ Pass (43 nodes) |
+| TC-53 | The SQL tests catch a leak | Planted a leak (card average includes the current payment), ran the tests, restored the file | Tests fail | ✅ Caught: `assert_first_transaction_has_no_history` failed on 4 rows and the suite stopped |
+| TC-54 | Reason wording is true in both directions | `tests/test_reasons.py` | Small and large amounts, ratios below and above 1, and empty history each get the right wording | ✅ Pass after a fix (see findings) |
+| TC-55 | Each payment gets its cheapest action; analyst capacity is respected | `tests/test_decisioning.py` | Approve, step-up, analyst review and decline each chosen in their own case; the lowest-value analyst case is moved to step-up when capacity is full | ✅ Pass |
+| TC-56 | Confirm then block | Toy card: fraud reviewed at 12:00, more fraud at 12:30 and 14:00 | With a 1-hour block delay, 12:30 is lost and 14:00 prevented; with no delay both are prevented | ✅ Pass |
+| TC-57 | Fairness intervals and flags | `tests/test_fairness.py` | Wilson intervals match published values; groups flagged for more interruptions and for less protection | ✅ Pass |
+| TC-58 | The drift alarm fires on real drift | `tests/test_drift.py`: amounts raised 20%, 50% and 100%; category mix shifted; half the values missing | Green, amber, red; red; red | ✅ Pass (after correcting the test's expectation, see findings) |
+| TC-59 | MI arithmetic | `tests/test_metrics.py` | Hit rate, false positive rate and value saved correct; "n/a" with no decisions | ✅ Pass |
+| TC-60 | Code style | `ruff check .` | No findings | ✅ Pass after fixing 12 cosmetic findings |
+| TC-61 | CI passes from a clean start | Local replay of `.github/workflows/ci.yml`: fresh virtual environment, empty PostgreSQL 16, CI-only settings, app image build | All steps pass | ✅ Pass: install, lint, 45 of 45 tests (72 s) and the image build all passed |
+
 ## Findings from testing
 
+- **Reason wording bug, found while writing TC-54 (fixed).** The card-history reason always said "Limited card history", even for a card with 2,521 earlier payments; 78 alerts carried it. It now says "Limited card history" only below 50 earlier payments and states the count as a plain fact above that. The time-of-day reason got the same guard (no live alert was affected). Alerts were regenerated; no analyst decisions existed to protect.
+- **A 50% rise in every amount is amber, not red (TC-58).** Card amounts are so widely spread that a 50% shift scores PSI 0.16; doubling scores 0.45. The first version of the test expected red and was wrong, not the monitor. Worth knowing when setting alarm levels: PSI on amounts is slow to react to moderate inflation.
 - **91 of the 999 cards contain nothing but fraud.** They average 10 transactions over 1.7 days, and they are exactly the 91 cards that appear in only one of the two files. That's 904 transactions, about 9% of all fraud. These cards have no genuine history, so "amount vs average" is measured against earlier fraud, and a model could learn "new card means fraud". Real fraud on newly compromised or newly opened cards does exist, so this is plausible, but it needs watching in SHAP and goes in the decision log.
 - **Distance from home doesn't separate fraud from genuine spend** (average 76.3 km against 76.1 km). The simulator places merchants randomly near the customer. The feature stays because it matters in real card fraud, but it should rank low.

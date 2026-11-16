@@ -1,0 +1,13 @@
+trans_num,trans_ts,cc_num,merchant,category,amt,first_name,last_name,gender,street,city,state,zip,cust_lat,cust_long,city_pop,job,dob,merch_lat,merch_long,is_fraud,source_file
+fx-a1,2020-01-01 10:00:00,9990000000000001,M1,grocery_pos,50.00,Test,Alpha,F,1 Test Street,Testville,TX,00001,40.0,-100.0,1000,Tester,1990-06-15,40.0,-100.0,0,fraudTrain.csv
+fx-a2,2020-01-01 10:30:00,9990000000000001,M2,grocery_pos,10.00,Test,Alpha,F,1 Test Street,Testville,TX,00001,40.0,-100.0,1000,Tester,1990-06-15,40.0,-100.0,0,fraudTrain.csv
+fx-a3,2020-01-01 12:00:00,9990000000000001,M1,shopping_net,300.00,Test,Alpha,F,1 Test Street,Testville,TX,00001,40.0,-100.0,1000,Tester,1990-06-15,40.0,-100.0,0,fraudTrain.csv
+fx-a4,2020-01-02 09:00:00,9990000000000001,M3,grocery_pos,5.00,Test,Alpha,F,1 Test Street,Testville,TX,00001,40.0,-100.0,1000,Tester,1990-06-15,40.0,-100.0,0,fraudTrain.csv
+fx-a5,2020-01-03 23:00:00,9990000000000001,M4,shopping_net,1200.00,Test,Alpha,F,1 Test Street,Testville,TX,00001,40.0,-100.0,1000,Tester,1990-06-15,41.0,-100.0,1,fraudTrain.csv
+fx-b1,2020-01-01 10:00:00,9990000000000002,M1,grocery_pos,30.00,Test,Bravo,M,2 Test Street,Testville,TX,00002,40.0,-100.0,1000,Student,2003-01-02,40.0,-100.0,0,fraudTrain.csv
+fx-b2,2020-01-01 11:00:00,9990000000000002,M5,grocery_pos,70.00,Test,Bravo,M,2 Test Street,Testville,TX,00002,40.0,-100.0,1000,Student,2003-01-02,40.0,-100.0,0,fraudTrain.csv
+fx-b3,2020-01-01 11:00:00,9990000000000002,M6,travel,15.00,Test,Bravo,M,2 Test Street,Testville,TX,00002,40.0,-100.0,1000,Student,2003-01-02,40.0,-100.0,0,fraudTrain.csv
+fx-b4,2020-01-02 10:59:59,9990000000000002,M5,grocery_pos,20.00,Test,Bravo,M,2 Test Street,Testville,TX,00002,40.0,-100.0,1000,Student,2003-01-02,40.0,-100.0,0,fraudTrain.csv
+fx-c1,2020-07-01 03:00:00,9990000000000003,M7,misc_net,900.00,Test,Charlie,F,3 Test Street,Testville,TX,00003,40.0,-100.0,1000,Retired,1955-07-01,40.0,-100.0,1,fraudTest.csv
+fx-c2,2020-07-01 03:10:00,9990000000000003,M7,misc_net,5.00,Test,Charlie,F,3 Test Street,Testville,TX,00003,40.0,-100.0,1000,Retired,1955-07-01,40.0,-100.0,0,fraudTest.csv
+fx-d1,2020-01-02 14:00:00,9990000000000004,M8,shopping_pos,600.00,Test,Delta,M,4 Test Street,Testville,TX,00004,40.0,-100.0,1000,Tester,1995-01-02,40.0,-100.0,0,fraudTrain.csv
