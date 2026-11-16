@@ -17,6 +17,8 @@ ORANGE, BLUE = "#eb6834", "#2a78d6"  # project palette: fraud orange, genuine bl
 
 
 st.title("Management information")
+st.caption("What the fraud team has done, what it achieved, whether the model still ranks alerts well, "
+           "and what is waiting. Built from analysts' recorded decisions, as a live MI pack would be.")
 
 worked = db.worked_alerts()
 open_q = db.queue_summary()
@@ -39,6 +41,7 @@ else:
     worked = worked[worked["decided_by"].isin(chosen)]
     s = summarise(worked)
 
+    st.subheader("1 · What the team has achieved")
     c = st.columns(4)
     c[0].metric("Alerts worked", f"{s['Alerts worked']:,}")
     c[1].metric("Hit rate", pct(s["Hit rate"]))
@@ -47,7 +50,7 @@ else:
     c[3].metric("False positive rate", pct(s["False positive rate"]),
                 help=f"Genuine alerts per confirmed fraud: {ratio}")
 
-    st.subheader("Alerts worked per day")
+    st.markdown("**Alerts worked per day**")
     daily = (worked.assign(day=pd.to_datetime(worked["decided_at"]).dt.normalize(),
                            decision=worked["analyst_decision"].map(DECISION_LABELS))
              .groupby(["day", "decision"]).size().rename("alerts").reset_index())
@@ -60,11 +63,11 @@ else:
                                      legend=alt.Legend(orient="top")),
                      tooltip=[alt.Tooltip("day:T", format="%d %b %Y", title="Day"), "decision:N", "alerts:Q"])
              .properties(height=260))
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, width="stretch")
 
     left, right = st.columns(2)
     with left:
-        st.subheader("By route")
+        st.subheader("2 · Where the work came from")
         by_route = pd.DataFrame([{"Route": ROUTE_LABELS[r], **summarise(g)} for r, g in worked.groupby("route")])
         st.dataframe(by_route[["Route", "Alerts worked", "Hit rate", "False positive rate", "Value saved"]],
                      hide_index=True, column_config={
@@ -72,17 +75,17 @@ else:
             "False positive rate": st.column_config.NumberColumn(format="percent"),
             "Value saved": st.column_config.NumberColumn(format="dollar")})
     with right:
-        st.subheader("By model score")
+        st.subheader("3 · Is the model still ranking well?")
         bands = pd.cut(worked["fraud_probability"], [0, 0.5, 0.9, 1.0001],
                        labels=["Under 50%", "50% to 90%", "90% and over"], right=False)
         by_band = pd.DataFrame([{"Fraud probability": b, **summarise(g)}
                                 for b, g in worked.groupby(bands, observed=True)])
         st.dataframe(by_band[["Fraud probability", "Alerts worked", "Hit rate"]], hide_index=True,
                      column_config={"Hit rate": st.column_config.NumberColumn(format="percent")})
-        st.caption("A model-risk check: hit rates should rise with the score. If they stop doing so, "
-                   "the model needs reviewing.")
+        st.caption("Hit rate by the model's score band. Higher scores should mean more fraud; if that stops "
+                   "being true, the model needs reviewing (a model-risk check).")
 
-st.subheader("Open queue")
+st.subheader("4 · What is waiting" if not worked.empty else "What is waiting")
 open_q = open_q.assign(Route=open_q["route"].map(ROUTE_LABELS))
 st.dataframe(open_q[["Route", "open_alerts", "open_expected_loss"]], hide_index=True, column_config={
     "open_alerts": st.column_config.NumberColumn("Open alerts", format="%d"),

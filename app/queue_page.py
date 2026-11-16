@@ -1,7 +1,8 @@
-"""Alert queue: open alerts ranked by expected loss, each with three plain-English reasons."""
+"""Alert queue: open alerts ranked by expected loss, worked in four steps (route, alert, why, decide)."""
 
 import json
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -32,11 +33,15 @@ FEATURE_LABELS = {
 }
 
 
+ORANGE, BLUE = "#eb6834", "#2a78d6"  # project palette: towards fraud, towards genuine
+
+
 def money(x: float) -> str:
     return f"${x:,.2f}"
 
 
 st.title("Alert queue")
+st.caption("Work the riskiest alerts first: choose a route, pick an alert, read why it was flagged, then decide.")
 if "flash" in st.session_state:
     st.toast(st.session_state.pop("flash"))
 
@@ -48,6 +53,7 @@ for col, (route, (label, _)) in zip(cols, ROUTES.items()):
 cols[3].metric("Expected loss in open alerts", f"${summary['open_expected_loss'].sum():,.0f}",
                help="Sum of fraud probability x amount over every open alert.")
 
+st.subheader("Step 1 · Choose a route")
 route = st.segmented_control("Route", options=list(ROUTES), default="analyst_review",
                              format_func=lambda r: ROUTES[r][0], label_visibility="collapsed") or "analyst_review"
 st.caption(ROUTES[route][1])
@@ -68,10 +74,12 @@ table = pd.DataFrame({
     "Main reason": queue["reason_1"],
 })
 
-st.subheader("Open alerts by expected loss")
-st.caption(f"Highest first; showing the top {len(queue)}. Select a row to work it.")
+st.subheader("Step 2 · Pick an alert")
+st.caption(f"Ranked by expected loss (fraud probability x amount), highest first; showing the top {len(queue)}. "
+           "Tick a row to open it; otherwise the top alert is shown.")
 picked = st.dataframe(
-    table, hide_index=True, height=320, on_select="rerun", selection_mode="single-row", key=f"table_{route}_{st.session_state.get('decisions_made', 0)}",
+    table, hide_index=True, height=320, on_select="rerun", selection_mode="single-row",
+    key=f"table_{route}_{st.session_state.get('decisions_made', 0)}",
     column_config={
         "Rank": st.column_config.NumberColumn(width="small"),
         "Time": st.column_config.DatetimeColumn(format="D MMM YYYY, HH:mm"),
@@ -86,44 +94,19 @@ picked = st.dataframe(
 rows = picked.selection.rows
 alert = queue.iloc[rows[0] if rows else 0]
 
-st.divider()
+st.subheader(f"Step 3 · Understand why: card {alert['card_ref']}, {money(alert['amount_usd'])}")
+st.write(f"**{alert['merchant']}**, {alert['category'].replace('_', ' ')} · "
+         f"{pd.Timestamp(alert['trans_ts']):%d %b %Y, %H:%M}")
 left, right = st.columns([1, 1], gap="large")
 
 with left:
-    st.subheader(f"Card {alert['card_ref']}: {money(alert['amount_usd'])}")
-    st.write(f"**{alert['merchant']}**, {alert['category'].replace('_', ' ')} · "
-             f"{pd.Timestamp(alert['trans_ts']):%d %b %Y, %H:%M}")
     a, b = st.columns(2)
     a.metric("Fraud probability", f"{alert['fraud_probability']:.1%}")
-    b.metric("Expected loss", money(alert["expected_loss_usd"]))
-
-    st.markdown("**Why this alert**")
+    b.metric("Expected loss", money(alert["expected_loss_usd"]),
+             help="Fraud probability x amount: what the bank stands to lose if this is fraud and missed.")
+    st.markdown("**Why this payment was flagged**")
     for i in (1, 2, 3):
         st.markdown(f"{i}. {alert[f'reason_{i}']}")
-
-    analyst = st.session_state.get("analyst", "").strip()
-    note = st.text_area("Note (optional)", key=f"note_{alert['trans_num']}", height=80,
-                        placeholder="e.g. Customer confirmed card lost on Friday")
-    confirm, genuine = st.columns(2)
-    clicked = None
-    if confirm.button("Confirm fraud", type="primary", use_container_width=True, disabled=not analyst):
-        clicked = "confirmed_fraud"
-    if genuine.button("Not fraud", use_container_width=True, disabled=not analyst):
-        clicked = "not_fraud"
-    if not analyst:
-        st.caption("Enter your name in the sidebar to record decisions.")
-
-with right:
-    st.markdown("**Score breakdown (for audit)**")
-    detail = alert["reason_detail"]
-    detail = json.loads(detail) if isinstance(detail, str) else detail
-    breakdown = pd.DataFrame({"Feature": [FEATURE_LABELS.get(k, k) for k in detail],
-                              "Effect on score": list(detail.values())})
-    breakdown = breakdown.sort_values("Effect on score", key=abs, ascending=False).head(8)
-    st.dataframe(breakdown, hide_index=True, use_container_width=True, column_config={
-        "Effect on score": st.column_config.NumberColumn(format="%+.2f")})
-    st.caption("The eight largest SHAP contributions, in log-odds: positive pushes towards fraud, negative "
-               f"towards genuine. Model version {alert['model_version']}.")
 
     history = db.card_alerts(alert["card_ref"])
     st.markdown(f"**All alerts on this card ({len(history)})**")
@@ -131,10 +114,44 @@ with right:
     history = pd.DataFrame({"Time": history["trans_ts"], "Amount": history["amount_usd"],
                             "Outcome": outcome.fillna("Open"), "Probability": history["fraud_probability"],
                             "Merchant": history["merchant"]})
-    st.dataframe(history, hide_index=True, use_container_width=True, height=200, column_config={
+    st.dataframe(history, hide_index=True, width="stretch", height=180, column_config={
         "Time": st.column_config.DatetimeColumn(format="D MMM, HH:mm"),
         "Amount": st.column_config.NumberColumn(format="$%.2f"),
         "Probability": st.column_config.NumberColumn(format="percent")})
+
+with right:
+    st.markdown("**What moved the score** (for audit)")
+    detail = alert["reason_detail"]
+    detail = json.loads(detail) if isinstance(detail, str) else detail
+    breakdown = pd.DataFrame({"Factor": [FEATURE_LABELS.get(k, k) for k in detail],
+                              "Effect": list(detail.values())})
+    breakdown = breakdown.reindex(breakdown["Effect"].abs().sort_values(ascending=False).index).head(8)
+    breakdown["Direction"] = breakdown["Effect"].map(lambda v: "Towards fraud" if v > 0 else "Towards genuine")
+    chart = (alt.Chart(breakdown).mark_bar(cornerRadiusEnd=4, size=16)
+             .encode(x=alt.X("Effect:Q", title="Effect on the score (log-odds)", axis=alt.Axis(gridOpacity=0.3)),
+                     y=alt.Y("Factor:N", sort=list(breakdown["Factor"]), title=None,
+                             axis=alt.Axis(labelLimit=280, labelOverlap=False, labelFontSize=12)),
+                     color=alt.Color("Direction:N", title=None, legend=alt.Legend(orient="top"),
+                                     scale=alt.Scale(domain=["Towards fraud", "Towards genuine"],
+                                                     range=[ORANGE, BLUE])),
+                     tooltip=["Factor", alt.Tooltip("Effect:Q", format="+.2f"), "Direction"])
+             .properties(height=300))
+    st.altair_chart(chart, width="stretch")
+    st.caption("The eight factors that moved this payment's score most, from SHAP. Bars to the right push "
+               f"towards fraud, to the left towards genuine. Model version {alert['model_version']}.")
+
+st.subheader("Step 4 · Decide")
+analyst = st.session_state.get("analyst", "").strip()
+note = st.text_area("Note (optional)", key=f"note_{alert['trans_num']}", height=80,
+                    placeholder="e.g. Customer confirmed card lost on Friday")
+confirm, genuine, _ = st.columns([1, 1, 2])
+clicked = None
+if confirm.button("Confirm fraud", type="primary", width="stretch", disabled=not analyst):
+    clicked = "confirmed_fraud"
+if genuine.button("Not fraud", width="stretch", disabled=not analyst):
+    clicked = "not_fraud"
+st.caption("Enter your name in the sidebar to record decisions." if not analyst else
+           "Your name, the time, the score you saw and the model version are logged with the decision for audit.")
 
 if clicked:
     if db.record_decision(alert["trans_num"], clicked, note, analyst):
@@ -152,4 +169,4 @@ with st.expander("Recently worked"):
     if recent.empty:
         st.write("No decisions recorded yet.")
     else:
-        st.dataframe(recent, hide_index=True)
+        st.dataframe(recent, hide_index=True, width="stretch")

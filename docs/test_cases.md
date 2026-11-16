@@ -129,6 +129,14 @@ Run with `pytest` (see the README). The SQL tests build the dbt project on an in
 | TC-60 | Code style | `ruff check .` | No findings | ✅ Pass after fixing 12 cosmetic findings |
 | TC-61 | CI passes from a clean start | Local replay of `.github/workflows/ci.yml`: fresh virtual environment, empty PostgreSQL 16, CI-only settings, app image build | All steps pass | ✅ Pass: install, lint, 45 of 45 tests (72 s) and the image build all passed |
 
+## App clarity pass
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-62 | Someone new can follow the app without help | Overview page: what the system does, the four-step flow, the four outcomes with live counts, links to the queue and MI, a glossary | Readable without fraud or data-science knowledge | ✅ Built and reviewed in the browser; Amrit to confirm in UAT |
+| TC-63 | The queue reads as a guided flow | Steps 1 to 4 (route, alert, why, decide); score breakdown as a "towards fraud / towards genuine" bar chart | Each step labelled; every factor name visible | ✅ Pass after widening the chart labels |
+| TC-64 | Decisions still write back after the redesign | Same write-back code and guards as TC-39 to TC-42; unit tests re-run | Unchanged behaviour | ✅ Pass (45 of 45 tests); re-exercised when recording the demo |
+
 ## Findings from testing
 
 - **Reason wording bug, found while writing TC-54 (fixed).** The card-history reason always said "Limited card history", even for a card with 2,521 earlier payments; 78 alerts carried it. It now says "Limited card history" only below 50 earlier payments and states the count as a plain fact above that. The time-of-day reason got the same guard (no live alert was affected). Alerts were regenerated; no analyst decisions existed to protect.
