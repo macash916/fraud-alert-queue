@@ -1,0 +1,21 @@
+version: 2
+
+models:
+  - name: fairness_attributes
+    description: >
+      RESTRICTED. Age band (at the time of payment) and gender per transaction, used only by the
+      fairness audit (src/fairness.py), which outputs aggregates only. Lives in its own schema so
+      it is never read by features, models or the analyst app.
+    columns:
+      - name: trans_num
+        data_tests: [unique, not_null]
+      - name: age_band
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["Under 18", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"]
+      - name: gender
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["F", "M"]

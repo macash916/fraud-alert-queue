@@ -79,6 +79,14 @@ XGBoost scored ROC-AUC 0.9997 and PR-AUC 0.983 on the validation months (Jan to 
 | TC-32 | Refreshing scores never overwrites an analyst's decision | Record a decision on one alert, rerun `src/explain.py`, check it, then remove it | Decision unchanged | ✅ Pass: still closed / confirmed_fraud |
 | TC-33 | Reasons say which way a payment is unusual | Review all reason patterns; reword ratios below 1, small amounts and long gaps | No reason reads as a non-reason | ✅ Pass after rewording (126 low ratios, 483 small amounts, 586 long gaps) |
 
+## Fairness
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-34 | Protected characteristics never reach the analytical layer | dbt test `assert_no_personal_data_downstream` after adding the restricted model | Pass | ✅ Pass |
+| TC-35 | Age bands cover every payment | dbt accepted-values test on `age_band` | Pass | ✅ Pass after adding "Under 18" (13 cards aged 13 to 17 found) |
+| TC-36 | No customer group is materially worse off under the model | `src/fairness.py`: interruptions and detection by age band and gender with 95% intervals | No flags | ✅ Pass: no flags; one watch item (female/male interruption gap, 1.09x overall) |
+
 ## Findings from testing
 
 - **91 of the 999 cards contain nothing but fraud.** They average 10 transactions over 1.7 days, and they are exactly the 91 cards that appear in only one of the two files. That's 904 transactions, about 9% of all fraud. These cards have no genuine history, so "amount vs average" is measured against earlier fraud, and a model could learn "new card means fraud". Real fraud on newly compromised or newly opened cards does exist, so this is plausible, but it needs watching in SHAP and goes in the decision log.
