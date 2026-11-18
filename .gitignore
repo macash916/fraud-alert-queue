@@ -238,3 +238,7 @@ Fraud_Alert_Queue_Master_Document.pdf
 
 # v2 working material (benchmark answers, interview notes): kept local until reviewed
 v2_prep/
+
+# v2 policy library: raw downloads and built passages stay local until the licence review (V9, V17)
+policy/raw/
+policy/passages.jsonl
