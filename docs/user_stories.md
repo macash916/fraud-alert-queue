@@ -22,7 +22,7 @@ Requirements: FR-03, FR-04, NFR-08
 **As a** fraud analyst **I want** to confirm fraud or clear a payment, with a note **so that** the outcome is recorded and the alert leaves the queue.
 - Given an open alert and my name entered, when I click Confirm fraud or Not fraud, then the alert closes with my decision, note, name and time.
 - Given an alert another analyst has just closed, when I try to decide it, then my decision is refused and I am told it was already worked.
-- Given no name entered, when I look at the decision buttons, then they are disabled.
+- Given no name entered, when I click a decision button, then nothing is recorded and a warning beside the buttons asks for my name.
 
 Requirements: FR-05, FR-06
 

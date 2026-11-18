@@ -155,6 +155,13 @@ with right:
                f"towards fraud, to the left towards genuine. Model version {alert['model_version']}.")
 
 st.subheader("Step 4 · Decide")
+# A refused decision must not be missed, so it stays here, where the analyst clicked, until they
+# dismiss it (a toast fades after a few seconds, and the case above has already moved on).
+if "refused" in st.session_state:
+    st.warning(st.session_state["refused"], icon="⚠️")
+    if st.button("Dismiss", key="dismiss_refused"):
+        del st.session_state["refused"]
+        st.rerun()
 analyst = st.session_state.get("analyst", "").strip()
 st.text_area("Note (optional)", key=f"note_{alert['trans_num']}", height=80,
              placeholder="e.g. Customer confirmed card lost on Friday")
@@ -164,27 +171,36 @@ def decide(trans_num: str, decision: str, label: str) -> None:
     """Record a decision on the alert that was on screen when the button was drawn.
 
     The transaction ID travels with the button, so a click can never land on a different alert,
-    even if the queue changed in the meantime. If someone else has already worked this alert,
-    nothing is recorded and the analyst is told.
+    even if the queue changed in the meantime. If no name has been entered, or someone else has
+    already worked this alert, nothing is recorded and a warning stays beside the buttons.
     """
     who = st.session_state.get("analyst", "").strip()
+    if not who:
+        # The buttons stay clickable so a click is never silently lost; without a name nothing is saved.
+        st.session_state["refused"] = (
+            "**Not recorded.** No name has been entered, so your decision was not saved. Type your name in "
+            "the sidebar, press Enter, then click again.")
+        return
     note = st.session_state.get(f"note_{trans_num}", "")
     if db.record_decision(trans_num, decision, note, who):
         outcome = "confirmed fraud" if decision == "confirmed_fraud" else "not fraud"
         st.session_state["flash"] = f"Recorded: {outcome} on {label}."
+        st.session_state.pop("refused", None)  # an earlier warning no longer applies
     else:
-        st.session_state["flash"] = f"Not recorded: {label} had already been worked by someone else."
+        st.session_state["refused"] = (
+            f"**Not recorded.** {label} had already been worked by someone else, so your decision was not "
+            "saved. The case above has been refreshed and now shows the next alert: check it before deciding.")
     # A new table key clears the selection, so the case panel goes back to the top alert.
     st.session_state["decisions_made"] = st.session_state.get("decisions_made", 0) + 1
 
 
 label = f"card {alert['card_ref']}, {money(alert['amount_usd'])}"
 confirm, genuine, _ = st.columns([1, 1, 2])
-confirm.button("Confirm fraud", type="primary", width="stretch", disabled=not analyst,
+confirm.button("Confirm fraud", type="primary", width="stretch",
                on_click=decide, args=(alert["trans_num"], "confirmed_fraud", label))
-genuine.button("Not fraud", width="stretch", disabled=not analyst,
+genuine.button("Not fraud", width="stretch",
                on_click=decide, args=(alert["trans_num"], "not_fraud", label))
-st.caption("Enter your name in the sidebar to record decisions." if not analyst else
+st.caption("Enter your name in the sidebar (and press Enter) to record decisions." if not analyst else
            "Your name, the time, the score you saw and the model version are logged with the decision for audit.")
 
 with st.expander("Recently worked"):

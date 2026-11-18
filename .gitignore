@@ -232,3 +232,9 @@ dbt/.user.yml
 
 # Local AI-assistant project brief: kept on this machine only
 CLAUDE.md
+
+# Private master document: kept on this machine only
+Fraud_Alert_Queue_Master_Document.pdf
+
+# v2 working material (benchmark answers, interview notes): kept local until reviewed
+v2_prep/

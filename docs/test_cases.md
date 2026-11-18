@@ -96,7 +96,7 @@ XGBoost scored ROC-AUC 0.9997 and PR-AUC 0.983 on the validation months (Jan to 
 | TC-39 | Confirm fraud writes back | Enter a name, add a note, click Confirm fraud | `app.alerts` closed with decision, note, name, time; one row in `app.alert_decision_log` with the score and model version seen; alert leaves the queue | ✅ Pass |
 | TC-40 | Not fraud writes back on a selected row | Select row 3 on another route, click Not fraud | Same as TC-39 for that alert; selection returns to the top alert | ✅ Pass (selection reset added after the first run showed the next alert inheriting the selection) |
 | TC-41 | An alert can't be worked twice | Call the decision function again on a closed alert | Rejected; no second log row | ✅ Pass |
-| TC-42 | Decisions need an analyst name | Leave the name empty | Buttons disabled, prompt shown | ✅ Pass |
+| TC-42 | Decisions need an analyst name | Leave the name empty and click a decision button | Nothing recorded; a warning asks for a name (buttons were disabled before TC-74) | ✅ Pass (re-checked after TC-74, 18 Nov 2026) |
 | TC-43 | MI figures match the recorded decisions | Two test decisions (1 fraud $5,920.50, 1 genuine) | Worked 2, hit rate 50%, value saved $5,921, false positive rate 50% | ✅ Pass. Test decisions then removed so MI starts clean |
 | TC-44 | `docker compose up` starts the app with the database | `docker compose up -d --build app` | `fraud_app` healthy on 127.0.0.1:8501, queue loads | ✅ Pass |
 | TC-45 | No data or secrets in the app image | List `/srv` inside the container | Only the app's Python files, its requirements and the Streamlit config | ✅ Pass |
@@ -142,6 +142,15 @@ Run with `pytest` (see the README). The SQL tests build the dbt project on an in
 | ID | What is checked | How | Expected | Result |
 |---|---|---|---|---|
 | TC-65 | A decision always lands on the alert the analyst was looking at | Two tabs, two analysts on the same alert; A confirms, then B clicks Not fraud on the out-of-date screen (UAT-10) | B refused; nothing recorded on any other alert | ✅ Pass after a fix (see findings); first run recorded B's click against a different $6,852.36 alert |
+
+## Business UAT
+
+| ID | What is checked | How | Expected | Result |
+|---|---|---|---|---|
+| TC-71 | Entering a name visibly unlocks decisions | Type a name in the sidebar and press Enter; then clear it | Sidebar confirms "Working as [name]" while a name is set, and prompts for one when it is empty | ✅ Pass after a fix: found by Amrit in business UAT ("nothing happens when I enter a name"). The name was saved, but the buttons it unlocks are further down the queue page, out of sight. The sidebar now confirms the name or prompts for one. Confirmed by Amrit in UAT-04 and UAT-08 (17 Nov 2026) |
+| TC-72 | The MI page survives an empty analyst filter | Management information: remove every analyst from the Analysts filter | A message asks for at least one analyst; "What is waiting" still shows | ✅ Pass after a fix: found by Amrit in business UAT (the page crashed with a KeyError). Checked in the browser with the filter at its default and empty: no errors. Confirmed by Amrit in UAT-07 (18 Nov 2026) |
+| TC-73 | A refused decision is impossible to miss | Two tabs, two names, both on the top alert. A confirms; B clicks Not fraud without refreshing | Next to B's decision buttons, a warning stays until dismissed: "Not recorded", naming the alert, saying the case has moved on to the next alert. Nothing is recorded for B | ✅ Pass after a fix: found by Amrit in business UAT (17 Nov). The refusal was a toast that faded in a few seconds while B's screen moved to another alert, and B then recorded a decision on 47a138af. Checked on a throwaway copy of the queue: warning shown after 8 seconds, only A's decision saved, Dismiss clears it. Confirmed by Amrit in UAT-10 (18 Nov 2026) |
+| TC-74 | A click is never silently lost because of the name box | (1) No name: click Not fraud. (2) Type a name without pressing Enter, then click Confirm fraud | (1) Nothing recorded, a warning asks for a name, the same alert stays on screen. (2) The name is applied and the decision recorded on the first click, on the alert on screen | ✅ Pass after a fix: found by Amrit in business UAT (18 Nov). Greyed-out buttons ignored clicks, and a click on one applied a typed name but was itself thrown away. Buttons now always clickable. Checked on a throwaway copy: (1) warning, nothing saved; (2) recorded under the typed name on the first click. Confirmed by Amrit in UAT-08 (18 Nov 2026) |
 
 ## README and demo
 

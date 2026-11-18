@@ -17,8 +17,14 @@ pages = st.navigation([
 ])
 
 with st.sidebar:
-    st.text_input("Your name", key="analyst", placeholder="e.g. A. Sharma",
+    st.text_input("Your name", key="analyst", placeholder="e.g. John Doe",
                   help="Recorded against every decision you make, for the audit trail.")
+    # Visible feedback: the decision buttons it unlocks are further down the queue page, out of sight.
+    if st.session_state.get("analyst", "").strip():
+        st.success(f"Working as **{st.session_state['analyst'].strip()}**. "
+                   "Your decisions are recorded under this name.")
+    else:
+        st.info("Type your name and press Enter before recording decisions.")
     st.caption("Start with the Overview, then work alerts in the Alert queue. "
                "Management information shows the results.")
     st.caption("Simulated data (Sparkov), test months 21 Jun to 31 Dec 2020. Amounts in US dollars.")

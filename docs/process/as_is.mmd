@@ -1,21 +1,29 @@
 flowchart TB
     subgraph C["Customer"]
         direction LR
-        C1([Pays by card]) ~~~ C5[Payment declined at the till] --> C6["Phones the bank to release<br/>the charge (P3)"] ~~~ C9([Retries the payment])
+        C1([Pays by card]) ~~~ C2["Text: did you make<br/>this payment? (Y/N)"] ~~~ C5[Payment declined, or held<br/>by the bank's systems] --> C6["Phones the card fraud team<br/>to get it cleared (P3)"] ~~~ C9([Retries the payment])
     end
     subgraph R["Payment system and rules engine"]
         direction LR
-        R1{"Any fixed rule fires?"} -- No --> R2["Approve (P2)"]
-        R1 -- Yes --> R3["Decline and raise an alert;<br/>reason = rule name only (P5)"]
+        W[(Suspicious-merchant<br/>watchlist)] --> R1{"Any fixed rule fires?"}
+        R1 -- No --> R2["Approve (P2)"]
+        R1 -- "Yes, high risk" --> R3["Decline: authorisation<br/>prohibited"]
+        R1 -- "Yes, lower risk" --> R4["Approve and alert"]
+        R3 --> R5["Alert raised; reason =<br/>rule name only (P5)"]
+        R4 --> R5
     end
-    subgraph A["Fraud operations analyst"]
+    subgraph A["Card fraud operations team"]
         direction LR
-        A1["Alert joins the queue in<br/>arrival or rule order (P4)"] --> A2[Analyst reaches it<br/>when the queue allows] --> A3["Contacts the customer (P1)"] --> A4{Customer confirms<br/>the payment?}
-        A4 -- Yes, genuine --> A5[Release the block]
-        A4 -- No, fraud --> A6[Block and reissue the card]
+        A1["Alert joins the queue<br/>in arrival order (P4)"] --> A2[Analyst reaches it<br/>when the queue allows] --> A3["Reviews the alert;<br/>most are genuine (P1)"] --> A4{Customer confirms<br/>the payment?}
+        A4 -- Yes, genuine --> A5[Clear the alert and<br/>release the payment]
+        A4 -- No, fraud --> A6[Block the card at once<br/>and reissue]
+        A6 --> A7[Refunds and disputes<br/>passed to the claims team]
     end
     C1 --> R1
+    R5 --> C2
+    R5 --> A1
     R3 --> C5
-    R3 --> A1
+    R4 -. "sometimes blocked anyway" .-> C5
+    C2 --> A4
     C6 --> A4
     A5 --> C9

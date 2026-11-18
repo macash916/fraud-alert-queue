@@ -112,12 +112,15 @@ Every material design decision, the options considered, the reason, and who made
 | D44 | S17 Push | Amrit runs `git push` himself after the pre-push report | Approved |
 | D45 | S17 Push | One follow-up fix push allowed if CI fails only on GitHub | Approved |
 | D46 | Parked | Tableau `rpt_*` tables | **Parked until further notice** |
-| D47 | Housekeeping | Old Desktop copy deleted by Amrit, or on his explicit word | **Parked by Amrit:** kept until he says otherwise |
+| D47 | Housekeeping | Old Desktop copy deleted by Amrit, or on Amrit's explicit word | **Done on Amrit's word (16 Nov 2026):** moved to the Bin (iCloud blocked a direct delete); Amrit empties the Bin |
 | D48 | Housekeeping | Update the local project brief's layout and definition of done at the end | Approved |
 | D49 | Housekeeping | Detailed report per section, then continue | Approved |
 | D50 | Pre-push | Fix the training row order found by the clean-machine rerun (B-03); retrain and register the champion as version 2; refresh the published figures | Amrit |
 | D51 | Pre-push | Jira backlog reconsidered and dropped again: the user stories, traceability matrix and UAT script already cover the agile artefacts, and a solo two-day build has no sprint history to show | Amrit |
 | D52 | Pre-push | Keep US dollars and UK controls, and say why in the README and model card (the rules follow the bank, not the currency) | Amrit |
+| D53 | Business review | As-is process map corrected from Amrit's operations review: rules both decline ("authorisation prohibited") and approve-and-alert; a text asks the customer to confirm; the queue runs in arrival order with a suspicious-merchant watchlist; customers phone the card fraud team directly, including when approve-and-alert payments are still held; a confirmed fraud blocks and reissues the card at once, and refunds and disputes go to the claims team | Amrit |
+| D54 | Business UAT | Two defects Amrit found during UAT fixed before sign-off: no visible feedback after entering a name (TC-71) and an MI crash when the analyst filter is emptied (TC-72); the test name placeholder now reads "e.g. John Doe" | Amrit |
+| D55 | Business UAT | Two more defects found in Amrit's UAT fixed before sign-off. TC-73: a refused decision (alert already worked by another analyst) is now a warning beside the decision buttons that stays until dismissed, not a toast that faded while the screen moved to another alert. TC-74: the decision buttons are always clickable, and without a name nothing is recorded and a warning asks for one; a disabled button had silently swallowed clicks. The UAT script's expected values were re-derived from the live queue after the tester chose to keep the earlier test decisions. All ten scenarios passed; signed off 18 Nov 2026, with a note that tester and product owner are the same person in this portfolio project | Amrit |
 
 ## 4. Decisions made while building S12 to S14 (proposed by Claude under the batch approval; for Amrit's review)
 

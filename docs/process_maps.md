@@ -6,17 +6,19 @@ Sources are in `docs/process/*.mmd` (Mermaid, which GitHub also renders), export
 
 ![As-is process](process_as_is.png)
 
-The as-is map is a **typical UK card-issuer process**, drawn from operations experience in card fraud. It is generic and contains nothing specific to any one bank.
+The as-is map is a **typical UK card-issuer process**, drawn from operations experience in card fraud. It is generic and contains nothing specific to any one bank. **Reviewed by Amrit Sharma on 16 Nov 2026** from card-fraud operations experience; the review added the two rule outcomes (decline, or approve and alert), the text to the customer, the suspicious-merchant watchlist, calls going straight to the card fraud team, and the hand-off of refunds and disputes to the claims team.
 
 | Marker | Pain point | Evidence (test months, simulated data) |
 |---|---|---|
 | P1 | Most of the analyst's work is on genuine customers | 3 in 4 rules alerts are genuine (hit rate 24.8%) |
 | P2 | Fraud that no rule describes goes straight through | 19% of fraud value is never alerted; mostly $100 to $499 in-store grocery payments |
-| P3 | A genuine customer has to phone the bank to get a declined payment released | Every genuine rules alert is a customer whose payment failed |
+| P3 | A genuine customer has to phone the card fraud team to get a payment cleared, including approve-and-alert payments the bank's systems still held | Every genuine rules alert is a customer whose payment failed or was held |
 | P4 | The queue order ignores how much money is at risk | A $50 alert can sit ahead of a $5,000 one |
 | P5 | The only explanation is the rule's name | Nothing a customer or auditor can be given about this payment |
 
 ## To-be: score, route by cost, explain, decide, learn
+
+Unchanged by the to-be: the suspicious-merchant watchlist stays as an input alongside the model, the text to the customer becomes the in-app step-up, and refunds and disputes still go to the claims team (out of scope here).
 
 ![To-be process](process_to_be.png)
 
