@@ -262,6 +262,13 @@ def expand(query: str) -> str:
     return query if not extra else f"{query} ({'; '.join(extra)})"
 
 
+# Which sources a question may search (decision V24). A question about a case searches only what an
+# analyst works to: payment law, the SCA rules and the bank's own procedures. A governance question
+# (how the bank may use automated decisions or AI) searches everything, including ICO guidance.
+CASE_SOURCES = {"PSRs 2017", "SCA RTS", "Procedures"}
+SCOPES = ("case", "governance")
+
+
 class Library:
     """Hybrid search over the passages: half keyword score, half meaning score (both scaled 0 to 1)."""
 
@@ -271,7 +278,10 @@ class Library:
         self.bm25 = BM25([f"{p.heading} {p.text}" for p in passages])
         self.weight = weight
 
-    def search(self, query: str, k: int = 5, use_glossary: bool = True) -> list[tuple[Passage, float]]:
+    def search(self, query: str, k: int = 5, use_glossary: bool = True,
+               scope: str = "governance") -> list[tuple[Passage, float]]:
+        if scope not in SCOPES:
+            raise ValueError(f"scope must be one of {SCOPES}")
         query = expand(query) if use_glossary else query
         kw = _minmax(self.bm25.scores(query))
         if self.vectors:
@@ -280,7 +290,8 @@ class Library:
             score = [self.weight * a + (1 - self.weight) * b for a, b in zip(kw, sem)]
         else:
             score = kw
-        ranked = sorted(range(len(score)), key=lambda i: -score[i])[:k]
+        keep = [i for i, p in enumerate(self.passages) if scope == "governance" or p.source in CASE_SOURCES]
+        ranked = sorted(keep, key=lambda i: -score[i])[:k]
         return [(self.passages[i], score[i]) for i in ranked]
 
 

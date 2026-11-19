@@ -24,7 +24,7 @@ def draft(**over):
         "evidence_against": [{"text": "Model probability is 42%, below even odds", "sources": ["fact:score"]}],
         "suggested_action": "confirm_fraud_block_card",
         "confidence": "medium",
-        "customer_message": "We've paused your card after a payment of $2,965.05 that didn't look like you.",
+        "message_template": "card_blocked_fraud",
         "audit_note": "Checked reasons and last 72 hours; suggested block under PSRs reg 71(2).",
         "policy_sources": ["policy:PSRs 2017 reg 71(2)"],
     }

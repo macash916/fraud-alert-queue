@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .messages import ALLOWED, TEMPLATES, NO_MESSAGE
+
 # The only actions the co-pilot may suggest. "insufficient_evidence" is always allowed: saying so beats guessing.
 ACTIONS = {
     "confirm_fraud_block_card": "Confirm fraud and block the card",
@@ -39,13 +41,14 @@ class Draft:
     evidence_against: list[Evidence]
     suggested_action: str
     confidence: str
-    customer_message: str
+    message_template: str  # an approved template id (see messages.py), never free text
     audit_note: str
     policy_sources: list[str] = field(default_factory=list)  # passages behind the suggested action
 
     def all_text(self) -> str:
-        """Every sentence the analyst or customer would read, for the grounding check."""
-        parts = [self.summary, self.customer_message, self.audit_note]
+        """Every sentence the co-pilot wrote, for the grounding check. The customer message isn't here:
+        it is filled from the alert itself, so it can't contain an invented figure."""
+        parts = [self.summary, self.audit_note]
         parts += [e.text for e in self.evidence_for + self.evidence_against]
         return "\n".join(parts)
 
@@ -76,15 +79,20 @@ def parse_draft(data: dict) -> Draft:
     if not isinstance(data, dict):
         raise DraftShapeError("the draft must be a JSON object")
     allowed = {"summary", "evidence_for", "evidence_against", "suggested_action", "confidence",
-               "customer_message", "audit_note", "policy_sources"}
+               "message_template", "audit_note", "policy_sources"}
     extra = set(data) - allowed
     if extra:  # e.g. a model trying to add "decision" or "close_alert"
         raise DraftShapeError(f"unexpected fields: {sorted(extra)}")
-    for key in ("summary", "customer_message", "audit_note"):
+    for key in ("summary", "audit_note"):
         if not isinstance(data.get(key), str) or not data[key].strip():
             raise DraftShapeError(f"{key} is missing")
     if data.get("suggested_action") not in ACTIONS:
         raise DraftShapeError(f"suggested_action must be one of {sorted(ACTIONS)}")
+    template = data.get("message_template")
+    if template != NO_MESSAGE and template not in TEMPLATES:
+        raise DraftShapeError(f"message_template must be one of {sorted(TEMPLATES) + [NO_MESSAGE]}")
+    if template not in ALLOWED[data["suggested_action"]]:
+        raise DraftShapeError(f"message_template {template!r} doesn't fit the action {data['suggested_action']!r}")
     if data.get("confidence") not in CONFIDENCE:
         raise DraftShapeError(f"confidence must be one of {CONFIDENCE}")
     policy = data.get("policy_sources", [])
@@ -96,7 +104,7 @@ def parse_draft(data: dict) -> Draft:
         evidence_against=_evidence(data.get("evidence_against", []), "evidence_against"),
         suggested_action=data["suggested_action"],
         confidence=data["confidence"],
-        customer_message=data["customer_message"].strip(),
+        message_template=template,
         audit_note=data["audit_note"].strip(),
         policy_sources=policy,
     )

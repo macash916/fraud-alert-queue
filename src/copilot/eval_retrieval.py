@@ -15,47 +15,51 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from .policy_library import from_database
+from .policy_library import CASE_SOURCES, from_database
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "v2_prep" / "retrieval_eval.md"
 
-# (id, question, accepted passages: any passage whose id starts with one of these counts as a hit)
+# (id, scope, question, accepted passages: any passage whose id starts with one of these counts as a hit)
 QUESTIONS = [
-    ("P01", "How quickly must the bank refund an unauthorised card payment once the customer reports it?", ["PSRs 2017 reg 76(2)"]),
-    ("P02", "When can the bank delay refunding an unauthorised card payment?", ["PSRs 2017 reg 76(3)"]),
-    ("P03", "What is the most a customer can be made to pay for a lost or stolen card?", ["PSRs 2017 reg 77(1)"]),
-    ("P04", "When does the £35 limit not protect the customer?", ["PSRs 2017 reg 77(3)"]),
-    ("P05", "Is the customer liable if the bank didn't apply Strong Customer Authentication?", ["PSRs 2017 reg 77(4)"]),
-    ("P06", "Who has to prove that a payment was authorised?", ["PSRs 2017 reg 75(1)"]),
-    ("P07", "Is the use of the card itself proof that the customer was grossly negligent?", ["PSRs 2017 reg 75(3)"]),
-    ("P08", "When may the bank block a card?", ["PSRs 2017 reg 71(2)"]),
-    ("P09", "Must the bank tell the customer it has blocked their card, and when?", ["PSRs 2017 reg 71(3)", "PSRs 2017 reg 71(4)"]),
-    ("P10", "When must the bank unblock the card?", ["PSRs 2017 reg 71(6)"]),
-    ("P11", "What must the customer do to keep their card and security details safe?", ["PSRs 2017 reg 72(1)", "PSRs 2017 reg 72(3)"]),
-    ("P12", "How long does a customer have to report an unauthorised payment?", ["PSRs 2017 reg 74(1)"]),
-    ("P13", "What counts as Strong Customer Authentication?", ["PSRs 2017 reg 100", "SCA RTS Art 4", "SCA RTS Art 9"]),
-    ("P14", "When can a payment be exempt from SCA because the bank judges it low risk?", ["SCA RTS Art 18"]),
-    ("P21", "Can a bank decline a payment by a purely automated decision? What safeguards apply?", ["UK GDPR Art 22A", "UK GDPR Art 22B", "UK GDPR Art 22C", "ICO ADM"]),
-    ("P22", "What should a bank tell a customer about an automated decision?", ["UK GDPR Art 22C", "ICO ADM: safeguards", "ICO AI: individual rights"]),
-    ("P23", "What does data minimisation mean for what goes into a model or an AI tool?", ["UK GDPR Art 5(1)", "ICO AI: data minimisation"]),
+    ("P01", "case", "How quickly must the bank refund an unauthorised card payment once the customer reports it?", ["PSRs 2017 reg 76(2)"]),
+    ("P02", "case", "When can the bank delay refunding an unauthorised card payment?", ["PSRs 2017 reg 76(3)"]),
+    ("P03", "case", "What is the most a customer can be made to pay for a lost or stolen card?", ["PSRs 2017 reg 77(1)"]),
+    ("P04", "case", "When does the £35 limit not protect the customer?", ["PSRs 2017 reg 77(3)"]),
+    ("P05", "case", "Is the customer liable if the bank didn't apply Strong Customer Authentication?", ["PSRs 2017 reg 77(4)"]),
+    ("P06", "case", "Who has to prove that a payment was authorised?", ["PSRs 2017 reg 75(1)"]),
+    ("P07", "case", "Is the use of the card itself proof that the customer was grossly negligent?", ["PSRs 2017 reg 75(3)"]),
+    ("P08", "case", "When may the bank block a card?", ["PSRs 2017 reg 71(2)"]),
+    ("P09", "case", "Must the bank tell the customer it has blocked their card, and when?", ["PSRs 2017 reg 71(3)", "PSRs 2017 reg 71(4)"]),
+    ("P10", "case", "When must the bank unblock the card?", ["PSRs 2017 reg 71(6)"]),
+    ("P11", "case", "What must the customer do to keep their card and security details safe?", ["PSRs 2017 reg 72(1)", "PSRs 2017 reg 72(3)"]),
+    ("P12", "case", "How long does a customer have to report an unauthorised payment?", ["PSRs 2017 reg 74(1)"]),
+    ("P13", "case", "What counts as Strong Customer Authentication?", ["PSRs 2017 reg 100", "SCA RTS Art 4", "SCA RTS Art 9"]),
+    ("P14", "case", "When can a payment be exempt from SCA because the bank judges it low risk?", ["SCA RTS Art 18"]),
+    ("P21", "governance", "Can a bank decline a payment by a purely automated decision? What safeguards apply?", ["UK GDPR Art 22A", "UK GDPR Art 22B", "UK GDPR Art 22C", "ICO ADM"]),
+    ("P22", "governance", "What should a bank tell a customer about an automated decision?", ["UK GDPR Art 22C", "ICO ADM: safeguards", "ICO AI: individual rights"]),
+    ("P23", "governance", "What does data minimisation mean for what goes into a model or an AI tool?", ["UK GDPR Art 5(1)", "ICO AI: data minimisation"]),
 ]
 
 
-def run(k: int = 5, use_glossary: bool = True) -> tuple[int, list[str]]:
+def run(k: int = 5, use_glossary: bool = True, use_scope: bool = True) -> tuple[int, list[str]]:
     lib = from_database()
     hits, lines = 0, []
-    for qid, q, gold in QUESTIONS:
-        results = lib.search(q, k=k, use_glossary=use_glossary)
+    for qid, scope, q, gold in QUESTIONS:
+        results = lib.search(q, k=k, use_glossary=use_glossary, scope=scope if use_scope else "governance")
         ids = [p.id for p, _ in results]
         rank = next((i + 1 for i, pid in enumerate(ids) if any(pid.startswith(g) for g in gold)), None)
         hits += rank is not None
-        lines.append(f"| {qid} | {q} | {', '.join(gold)} | {rank or 'miss'} | {ids[0]} |")
+        lines.append(f"| {qid} | {scope} | {q} | {', '.join(gold)} | {rank or 'miss'} | {ids[0]} |")
     return hits, lines
 
 
 if __name__ == "__main__":
-    base_hits, _ = run(use_glossary=False)
+    base_hits, _ = run(use_glossary=False, use_scope=False)
+    unscoped_hits, _ = run(use_scope=False)
+    lib = from_database()
+    case_qs = [q for _, scope, q, _ in QUESTIONS if scope == "case"]
+    off_topic = sum(p.source not in CASE_SOURCES for q in case_qs for p, _ in lib.search(q, k=5))
     hits, lines = run()
     n = len(QUESTIONS)
     report = [
@@ -70,8 +74,15 @@ if __name__ == "__main__":
         "automated decision), added after the first run showed every miss was a vocabulary gap. Because it was added "
         "after seeing these results, the score below is optimistic until it is re-run on new questions.",
         "",
-        "| Q | Question | Accepted provisions | Rank of first hit | Top result |",
-        "|---|---|---|---|---|",
+        f"With the glossary but without scoping (V24) it finds {unscoped_hits} of {n} ({unscoped_hits / n:.0%}). "
+        "Scoping means a case question searches only payment law, the SCA rules and the bank's procedures; "
+        "a governance question searches everything, ICO guidance included. "
+        f"On today's library it changes nothing: unscoped, {off_topic} of the {5 * len(case_qs)} top-five results "
+        "for case questions came from governance sources. It is kept as a safeguard for when FCA and PRA summaries "
+        "are added, and so a case note can never cite AI-governance guidance.",
+        "",
+        "| Q | Scope | Question | Accepted provisions | Rank of first hit | Top result |",
+        "|---|---|---|---|---|---|",
         *lines,
         "",
         "Not tested yet: P15 to P20 and P24 to P29 (FCA and PRA guidance, waiting for decision V17) and P30 "
