@@ -242,3 +242,6 @@ v2_prep/
 # v2 policy library: raw downloads and built passages stay local until the licence review (V9, V17)
 policy/raw/
 policy/passages.jsonl
+
+# Claude Code personal settings (the shared .claude/settings.json is committed)
+.claude/settings.local.json
